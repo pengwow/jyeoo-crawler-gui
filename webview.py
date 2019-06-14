@@ -1,5 +1,5 @@
 import sys
-from interface.utils import set_cookie_config, set_config
+from utils import set_cookie_config, set_config
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile

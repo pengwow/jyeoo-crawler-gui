@@ -1,16 +1,16 @@
 # coding=utf-8
 import sys
 import time
-from interface.ui import client
-from interface.ui import DB_dialog, WebView
-from interface.webview import MainWindow
+from ui import client
+from ui import DB_dialog, WebView
+from webview import MainWindow
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
 from PyQt5.QtCore import QThread, pyqtSignal, QByteArray
 from PyQt5.QtGui import QPixmap, QImage
 # from lxml import etree
-from interface import utils
-from interface.mysql_model import *
+import utils
+from mysql_model import *
 # from interface.web_driver import WebDriver
 
 # 自动化引入
