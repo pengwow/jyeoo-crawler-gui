@@ -221,8 +221,8 @@ class DBSession(object):
         # from jyeoo.settings import MYSQL_ENGINE
         # 初始化数据库连接: password 为自己数据库密码
         # '数据库类型+数据库驱动名称://用户名:口令@机器地址:端口号/数据库名'
-        MYSQL_ENGINE = 'mysql+pymysql://{account}:{password}@{ip}:{port}/{dbname}'
-        self.engine = create_engine(MYSQL_ENGINE.format(account=account,
+        mysql_engine = 'mysql+pymysql://{account}:{password}@{ip}:{port}/{dbname}'
+        self.engine = create_engine(mysql_engine.format(account=account,
                                                         password=password,
                                                         ip=ip,
                                                         port=port,

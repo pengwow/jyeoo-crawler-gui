@@ -1,23 +1,22 @@
 # coding=utf-8
 import sys
 import time
+from lxml import etree
 from ui import client
 from ui import DB_dialog, WebView
 from webview import MainWindow
-
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog
-from PyQt5.QtCore import QThread, pyqtSignal, QByteArray
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QMessageBox
+from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QPixmap, QImage
-# from lxml import etree
 import utils
 from mysql_model import *
-# from interface.web_driver import WebDriver
 
+from multiprocessing import Lock
 # 自动化引入
 # ###超时相关
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support.wait import WebDriverWait, TimeoutException
 # ###设备相关
 from selenium import webdriver
 from selenium.webdriver import DesiredCapabilities
@@ -32,6 +31,8 @@ jyeoo_qqlogin_url = 'http://www.jyeoo.com/api/qqlogin?u=http://www.jyeoo.com/'
 
 # 详情页面
 DETAIL_PAGE = 'http://www.jyeoo.com/{subject}/ques/detail/{fieldset}'
+
+mutex = Lock()
 
 
 class MyDBDialog(QDialog, DB_dialog.Ui_Dialog):
@@ -68,7 +69,8 @@ class WebViewDialog(QDialog, WebView.Ui_Dialog):
         self.setWindowTitle('错误图片，清晰版看当前目录下的error.png')
         self.label.setScaledContents(True)
         image = QImage.fromData(image_png)
-        pixmap = QPixmap.fromImage(image)
+        pixmap = QPixmap()
+        pixmap = pixmap.fromImage(QImage=image, flags=None)
         self.label.setPixmap(pixmap)
 
 
@@ -76,6 +78,8 @@ class Worker(QThread):
     sinOut = pyqtSignal(str)  # 自定义信号，执行run()函数时，从相关线程发射此信号
     crawler_progress = pyqtSignal(int, int)  # 爬虫进度条信号
     chapter_progress = pyqtSignal(int, int)  # 章节进度条信号
+    crawler_chapter_progress = pyqtSignal(int, int)  # 爬取章节进度条信号
+    message_box = pyqtSignal(str, str)  # 弹窗提示
 
     def __init__(self, parent=None):
         super(Worker, self).__init__(parent)
@@ -84,6 +88,11 @@ class Worker(QThread):
         self.working = True
         self.db_connect = None
         self.subject_code = ''
+        self.subject_name = ''
+        self.teaching = ''
+        self.teaching_name = ''
+        self.level_code = ''
+        self.level_name = ''
         self.chapter_id = ''
         self.is_recursive = False  # 是否递归
         self.cookies = dict()
@@ -142,6 +151,7 @@ class Worker(QThread):
         # 添加cookie
         self.add_cookie()
         if self.type:
+            # 动态执行方法
             eval('self.{func}()'.format(func=self.type))
 
     def library_chapter(self):
@@ -149,7 +159,68 @@ class Worker(QThread):
         章节爬取动作
         :return:
         """
-        self.get
+        start_url = self.get_chapter_url()
+        self.driver.get(start_url)
+        try:
+            WebDriverWait(self.driver, 30).until(
+                ec.visibility_of_element_located((By.XPATH, '//div[@class="tree-head"]/span[@id="spanEdition"]')))
+        except TimeoutException as e:
+            self.sinOut.emit('超时！！！ %s' % str(e))
+            return
+        teaching = self.driver.find_element_by_xpath('//div[@class="tree-head"]/span[@id="spanEdition"]').text
+        level_name = self.driver.find_element_by_xpath('//div[@class="tree-head"]/span[@id="spanGrade"]').text
+        teaching = teaching.replace(':', '').replace('：', '')
+        self.sinOut.emit('进行爬取章节！')
+        if self.teaching_name != teaching or self.level_name != level_name:
+            self.message_box.emit('警告', "没有数据！")
+            return
+        # WebDriverWait(self.driver, 30).until(
+        #     ec.visibility_of_element_located((By.XPATH, '//ul[@id="JYE_POINT_TREE_HOLDER"]//li')))
+        et = etree.HTML(self.driver.page_source)
+        library_id = self.teaching
+        # sub_obj = self.driver.find_elements_by_xpath('//ul[@id="JYE_POINT_TREE_HOLDER"]//li')
+        sub_obj = et.xpath('//ul[@id="JYE_POINT_TREE_HOLDER"]//li')
+        chapters_list = list()
+
+        total = len(sub_obj)
+        current_count = 0
+        for item in sub_obj:
+            lc_item = dict()
+            lc_item['id'] = str(uuid.uuid1())
+            pk = item.attrib.get('pk')
+
+            lc_item['pk'] = pk
+            temp_list = pk.split('~')
+
+            lc_item['name'] = item.attrib.get('nm')
+
+            if temp_list[-1]:
+                lc_item['library_id'] = library_id
+                parent_id = temp_list[temp_list.index(temp_list[-1]) - 1]
+                lc_item['parent_id'] = ''
+                if parent_id != lc_item['library_id']:
+                    lc_item['parent_id'] = parent_id
+            else:
+                lc_item['library_id'] = library_id
+                parent_id = temp_list[temp_list.index(temp_list[-2]) - 1]
+                lc_item['parent_id'] = ''
+                if parent_id != lc_item['library_id']:
+                    lc_item['parent_id'] = parent_id
+            chapters_list.append(lc_item)
+            current_count += 1
+            self.crawler_chapter_progress.emit(current_count, total)
+        if chapters_list:
+            chapters = self.db_connect.session.query(LibraryChapter.name, LibraryChapter.id).filter(
+                LibraryChapter.library_id == library_id)
+            mutex.acquire()
+            chapters.delete()
+            self.db_connect.session.commit()
+            mutex.release()
+            for item in chapters_list:
+                mutex.acquire()
+                self.db_session.add(LibraryChapter(**item))
+                mutex.release()
+        self.sinOut.emit('章节爬取完成，重新加载查看')
 
     def item_bank(self):
         """
@@ -182,7 +253,7 @@ class Worker(QThread):
         """
         # 获取总题量
         WebDriverWait(self.driver, 30).until(
-            EC.visibility_of_element_located((By.XPATH, '//td[@id="TotalQuesN"]/em')))
+            ec.visibility_of_element_located((By.XPATH, '//td[@id="TotalQuesN"]/em')))
         topic_count = self.driver.find_element_by_xpath('//td[@id="TotalQuesN"]/em').text
         # 已经爬取的个数
         already_crawler_count = 0
@@ -190,7 +261,7 @@ class Worker(QThread):
 
             # 等待翻页已加载到页面
             WebDriverWait(self.driver, 30).until(
-                EC.visibility_of_element_located((By.XPATH, "//a[@class='index cur']")))
+                ec.visibility_of_element_located((By.XPATH, "//a[@class='index cur']")))
 
             # 获取当前页
             cur_page = self.driver.find_element_by_xpath('//a[@class="index cur"]').text
@@ -255,7 +326,9 @@ class Worker(QThread):
         item_bank_init['library_id'] = args.get('library_id')
         item_bank_init['chaper_id'] = self.chapter_id
         item_bank_init['is_finish'] = 0
+        mutex.acquire()
         self.db_connect.add(ItemBankInit(**item_bank_init))
+        mutex.release()
 
     def get_item_bank_init_url(self, chapter_id, subject_code):
         """
@@ -272,7 +345,9 @@ class Worker(QThread):
                 is_ok_count = self.db_session.query(ItemBankInit).filter(ItemBankInit.chaper_id == last_data.id).count()
                 if is_ok_count > 1:
                     last_data.is_finish = 1
+                    mutex.acquire()
                     self.db_session.commit()
+                    mutex.release()
             last_data = item
             temp_dict = dict()
             # 学科
@@ -292,18 +367,9 @@ class Worker(QThread):
             yield re_dict
 
     def get_chapter_url(self):
-        # from jyeoo.mysql_model import DBSession, LibraryEntry
-        # re_list = list()
-        re_dict = dict()
-        print(self.subject_code)
-        # query = session.session.query(LibraryEntry).all()
-        # for item in query:
-        # url_str = 'http://www.jyeoo.com/{subject}/ques/search?f=0&q={id}'
-        # if int(item.level_code) > 1:
-        #     re_dict[item.id] = url_str.format(subject=item.subject_code + item.level_code, id=item.id)
-        # else:
-        #     re_dict[item.id] = url_str.format(subject=item.subject_code, id=item.id)
-        return re_dict
+        url_str = 'http://www.jyeoo.com/{subject}/ques/search?f=0&q={id}'
+        re_url = url_str.format(subject=self.subject_code, id=self.teaching)
+        return re_url
 
 
 class MyWindow(QMainWindow, client.Ui_MainWindow):
@@ -332,6 +398,8 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.thread.sinOut.connect(self.crawler_signal)
         self.thread.crawler_progress.connect(self.crawler_progress)
         self.thread.chapter_progress.connect(self.chapter_progress)
+        self.thread.crawler_chapter_progress.connect(self.crawler_chapter_progress)
+        self.thread.message_box.connect(self.message_box)
 
     @staticmethod
     def init_db_connect():
@@ -374,8 +442,10 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         :return:
         """
         self.comboBox_level.clear()
+        mutex.acquire()
         levels = self.db_connect.session.query(ItemStyle.level_name, ItemStyle.level_code).group_by(
             ItemStyle.level_name)
+        mutex.release()
         for item in levels:
             self.comboBox_level.addItem(item[0], item[1])
 
@@ -386,8 +456,10 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         """
         self.comboBox_chapter.clear()
         library_id = self.comboBox_teaching.currentData()
+        mutex.acquire()
         chapters = self.db_connect.session.query(LibraryChapter.name, LibraryChapter.id).filter(
             LibraryChapter.library_id == library_id)
+        mutex.release()
         for item in chapters:
             self.comboBox_chapter.addItem(item[0], item[1])
 
@@ -398,9 +470,11 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         """
         self.comboBox_grade.clear()
         level_code = self.comboBox_level.currentData()
+        mutex.acquire()
         grade_query = self.db_connect.session.query(LevelGradeRef.grade_name,
                                                     LevelGradeRef.grade_code).filter(
             LevelGradeRef.level_code == level_code)
+        mutex.release()
         for item in grade_query:
             self.comboBox_grade.addItem(item[0], item[1])
 
@@ -411,9 +485,11 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         """
         self.comboBox_subject.clear()
         level_data = self.comboBox_level.currentData()
+        mutex.acquire()
         subject_query = self.db_connect.session.query(LevelSubjectsRef.subject_name,
                                                       LevelSubjectsRef.subject_code).filter(
             LevelSubjectsRef.level_code == level_data)
+        mutex.release()
         for item in subject_query:
             _level = '' if int(level_data) == 1 else level_data
             self.comboBox_subject.addItem(item[0], item[1] + _level)
@@ -428,8 +504,10 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         subject = self.comboBox_subject.currentData()
         if subject[-1].isdigit():
             subject = subject[:-1]
+        mutex.acquire()
         teaching_query = self.db_connect.session.query(LibraryEntry.style_name, LibraryEntry.id).filter(
             LibraryEntry.grade_code == grade, LibraryEntry.subject_code == subject)
+        mutex.release()
         for item in teaching_query:
             self.comboBox_teaching.addItem(item[0], item[1])
 
@@ -449,7 +527,11 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.thread.chapter_id = self.comboBox_chapter.currentData()
         self.thread.cookies = utils.get_config('cookies')
         self.thread.subject_code = self.comboBox_subject.currentData()
+        self.thread.subject_name = self.comboBox_subject.currentText()
         self.thread.level_code = self.comboBox_level.currentData()
+        self.thread.level_name = self.comboBox_grade.currentText()
+        self.thread.teaching = self.comboBox_teaching.currentData()
+        self.thread.teaching_name = self.comboBox_teaching.currentText()
         self.thread.crawl_maximum = int(self.spinBox_crawlMaximum.text())
         self.thread.db_connect = self.db_connect
 
@@ -461,6 +543,10 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
 
     def start_chapter(self):
         self.statusbar.showMessage('正在启动无头浏览器')
+        message_box = QMessageBox()
+        result = message_box.warning(self, "警告", "警告！会删除章节数据，已爬取的题库将会影响！", QMessageBox.Ok | QMessageBox.Cancel)
+        if result == QMessageBox.Cancel:
+            return
         self.init_work_thread_data()
         self.thread.type = 'library_chapter'
         self.thread.start()
@@ -470,20 +556,33 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
 
     def crawler_progress(self, current, maximum):
         self.progressBar_crawler.setMaximum(maximum)
-        if current > maximum:
+        if current >= maximum:
             self.progressBar_crawler.setValue(maximum)
         else:
             self.progressBar_crawler.setValue(current)
 
     def chapter_progress(self, current, maximum):
         self.progressBar_chapter.setMaximum(maximum)
-        if current > maximum:
+        if current >= maximum:
             self.progressBar_chapter.setValue(maximum)
         else:
             self.progressBar_chapter.setValue(current)
 
+    def crawler_chapter_progress(self, current, maximum):
+        self.progressBar_crawler_chapter.setMaximum(maximum)
+        if current >= maximum:
+            self.progressBar_crawler_chapter.setValue(maximum)
+            self.combobox_init(['refresh_chapter'])
+        else:
+            self.progressBar_crawler_chapter.setValue(current)
+
+    def message_box(self, title, content):
+        message_box = QMessageBox()
+        message_box.warning(self, title, content, QMessageBox.Ok)
+
 
 if __name__ == '__main__':
+    print(pymysql.VERSION)
     app = QApplication(sys.argv)
     win = MyWindow()
     win.show()

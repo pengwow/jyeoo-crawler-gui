@@ -1,12 +1,10 @@
 import configparser
 import os
-from interface.mysql_model import *
-from interface.utils import *
 
-ddd = 'sssss2'
-# print(db_dict)
-print(ddd[:-1])
-
+ddd = '苏科版：'.replace(':', '').replace('：', '')
+from selenium import webdriver
+sss = webdriver.PhantomJS()
+sss.page_source
 #
 # db_connect = DBSession(account=db_dict['db_account'], password=db_dict['db_password'],
 #                        ip=db_dict['db_ip'], port=db_dict['db_port'], dbname=db_dict['db_dbname'])
