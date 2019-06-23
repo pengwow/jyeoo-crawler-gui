@@ -18,3 +18,5 @@ docx==0.2.4
 python-docx==0.8.10
 pyqt5
 sip
+lxml
+pyupdater

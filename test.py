@@ -1,10 +1,20 @@
-import configparser
-import os
+from pyupdater.client import Client
+from client_config import ClientConfig
 
-ddd = '苏科版：'.replace(':', '').replace('：', '')
-from selenium import webdriver
-sss = webdriver.PhantomJS()
-sss.page_source
+client = Client(ClientConfig())
+client.refresh()
+def print_status_info(info):
+    total = info.get(u'total')
+    downloaded = info.get(u'downloaded')
+    status = info.get(u'status')
+    print(downloaded, total, status)
+client.add_progress_hook(print_status_info)
+
+APP_NAME = 'jyeoo-crawler'
+APP_VERSION = '0.0.0'
+app_update = client.update_check(APP_NAME, APP_VERSION)
+if app_update is not None:
+    print("111111")
 #
 # db_connect = DBSession(account=db_dict['db_account'], password=db_dict['db_password'],
 #                        ip=db_dict['db_ip'], port=db_dict['db_port'], dbname=db_dict['db_dbname'])

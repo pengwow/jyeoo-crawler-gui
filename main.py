@@ -10,7 +10,6 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QPixmap, QImage
 import utils
 from mysql_model import *
-
 from multiprocessing import Lock
 # 自动化引入
 # ###超时相关
@@ -20,18 +19,15 @@ from selenium.webdriver.support.wait import WebDriverWait, TimeoutException
 # ###设备相关
 from selenium import webdriver
 from selenium.webdriver import DesiredCapabilities
-# 必须添加 否则打包会遗漏
-import pymysql
 # 忽略警告
 import warnings
 
+# 忽略警告
 warnings.filterwarnings("ignore")
-
 jyeoo_qqlogin_url = 'http://www.jyeoo.com/api/qqlogin?u=http://www.jyeoo.com/'
-
 # 详情页面
 DETAIL_PAGE = 'http://www.jyeoo.com/{subject}/ques/detail/{fieldset}'
-
+# 锁
 mutex = Lock()
 
 
@@ -153,6 +149,14 @@ class Worker(QThread):
         if self.type:
             # 动态执行方法
             eval('self.{func}()'.format(func=self.type))
+
+    def item_bank_details(self):
+        """
+        详情页爬取方法
+        :return:
+        """
+
+        return
 
     def library_chapter(self):
         """
@@ -371,6 +375,15 @@ class Worker(QThread):
         re_url = url_str.format(subject=self.subject_code, id=self.teaching)
         return re_url
 
+    def get_details_url(self):
+        """
+        获取详情页url
+        :return: list
+        """
+        
+        self.chapter_id
+        return
+
 
 class MyWindow(QMainWindow, client.Ui_MainWindow):
     windowList = []
@@ -428,7 +441,10 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.comboBox_subject.activated.connect(lambda: self.combobox_init(['refresh_teaching', 'refresh_chapter']))
         self.comboBox_teaching.activated.connect(lambda: self.combobox_init(['refresh_chapter']))
         self.pushButton_loaddata.clicked.connect(lambda: self.combobox_init(self.refresh_list))
+        # 章节开始
         self.pushButton_start_chapter.clicked.connect(self.start_chapter)
+        # 详情页开始
+        self.pushButton_start_details.clicked.connect(self.start_details)
 
     def combobox_init(self, refresh_list):
         exec_str = 'self.{func}()'
@@ -541,6 +557,12 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.thread.type = 'item_bank'
         self.thread.start()
 
+    def start_details(self):
+        self.statusbar.showMessage('正在启动无头浏览器')
+        self.init_work_thread_data()
+        self.thread.type = 'item_bank_details'
+        self.thread.start()
+
     def start_chapter(self):
         self.statusbar.showMessage('正在启动无头浏览器')
         message_box = QMessageBox()
@@ -582,7 +604,6 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
 
 
 if __name__ == '__main__':
-    print(pymysql.VERSION)
     app = QApplication(sys.argv)
     win = MyWindow()
     win.show()

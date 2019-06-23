@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>982</width>
+    <width>997</width>
     <height>744</height>
    </rect>
   </property>
@@ -109,7 +109,7 @@
         <attribute name="title">
          <string>题库</string>
         </attribute>
-        <widget class="QWidget" name="">
+        <widget class="QWidget" name="layoutWidget">
          <property name="geometry">
           <rect>
            <x>20</x>
@@ -198,6 +198,61 @@
          </layout>
         </widget>
        </widget>
+       <widget class="QWidget" name="tab_3">
+        <attribute name="title">
+         <string>详情页</string>
+        </attribute>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>60</y>
+           <width>891</width>
+           <height>53</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>数量：</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="spinBox_details">
+            <property name="maximum">
+             <number>1000</number>
+            </property>
+            <property name="value">
+             <number>100</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>进度：</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QProgressBar" name="progressBar_details">
+            <property name="value">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_start_details">
+            <property name="text">
+             <string>开始</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
        <widget class="QWidget" name="tab_2">
         <attribute name="title">
          <string>章节</string>
@@ -251,7 +306,7 @@
     <property name="title">
      <string>筛选条件</string>
     </property>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>30</x>
@@ -405,21 +460,29 @@
         </property>
        </widget>
       </item>
+      <item row="2" column="3">
+       <widget class="QLCDNumber" name="lcdNumber_chapter"/>
+      </item>
+      <item row="2" column="2">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>已有数据量：</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </widget>
    <zorder>groupBox_2</zorder>
    <zorder>groupBox</zorder>
    <zorder>groupBox_3</zorder>
-   <zorder>layoutWidget</zorder>
-   <zorder>progressBar_crawler_2</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>982</width>
+     <width>997</width>
      <height>41</height>
     </rect>
    </property>
@@ -428,6 +491,7 @@
      <string>设置</string>
     </property>
     <addaction name="actionDB"/>
+    <addaction name="actionUpgrade"/>
    </widget>
    <addaction name="menu"/>
   </widget>
@@ -442,6 +506,11 @@
   <action name="actionDB">
    <property name="text">
     <string>数据库</string>
+   </property>
+  </action>
+  <action name="actionUpgrade">
+   <property name="text">
+    <string>检查更新</string>
    </property>
   </action>
  </widget>
