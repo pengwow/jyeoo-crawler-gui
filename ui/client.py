@@ -193,6 +193,7 @@ class Ui_MainWindow(object):
         self.comboBox_chapter.setObjectName("comboBox_chapter")
         self.gridLayout.addWidget(self.comboBox_chapter, 2, 1, 1, 1)
         self.lcdNumber_chapter = QtWidgets.QLCDNumber(self.layoutWidget3)
+        self.lcdNumber_chapter.setDigitCount(10)
         self.lcdNumber_chapter.setObjectName("lcdNumber_chapter")
         self.gridLayout.addWidget(self.lcdNumber_chapter, 2, 3, 1, 1)
         self.label_3 = QtWidgets.QLabel(self.layoutWidget3)

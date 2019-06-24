@@ -155,6 +155,9 @@ class Worker(QThread):
         详情页爬取方法
         :return:
         """
+        start_urls = self.get_details_url()
+        for url in start_urls:
+            self.driver.get(url)
 
         return
 
@@ -380,9 +383,11 @@ class Worker(QThread):
         获取详情页url
         :return: list
         """
-        
-        self.chapter_id
-        return
+        re_list = list()
+        item_bank_init = self.db_session.query(ItemBankInit).filter(ItemBankInit.chaper_id == self.chapter_id)
+        for item in item_bank_init:
+            re_list.append(item.detail_page_url)
+        return re_list
 
 
 class MyWindow(QMainWindow, client.Ui_MainWindow):
@@ -395,6 +400,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
                              'refresh_subject',
                              'refresh_teaching',
                              'refresh_chapter',
+                             'refresh_bank_total',
                              ]
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
@@ -435,11 +441,15 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         # 操作：题库相关
         self.pushButton_start.clicked.connect(self.start)
         self.comboBox_level.activated.connect(
-            lambda: self.combobox_init(['refresh_grade', 'refresh_subject', 'refresh_teaching', 'refresh_chapter']))
+            lambda: self.combobox_init(
+                ['refresh_grade', 'refresh_subject', 'refresh_teaching', 'refresh_chapter', 'refresh_bank_total']))
         self.comboBox_grade.activated.connect(
-            lambda: self.combobox_init(['refresh_subject', 'refresh_teaching', 'refresh_chapter']))
-        self.comboBox_subject.activated.connect(lambda: self.combobox_init(['refresh_teaching', 'refresh_chapter']))
-        self.comboBox_teaching.activated.connect(lambda: self.combobox_init(['refresh_chapter']))
+            lambda: self.combobox_init(
+                ['refresh_subject', 'refresh_teaching', 'refresh_chapter', 'refresh_bank_total']))
+        self.comboBox_subject.activated.connect(
+            lambda: self.combobox_init(['refresh_teaching', 'refresh_chapter', 'refresh_bank_total']))
+        self.comboBox_teaching.activated.connect(lambda: self.combobox_init(['refresh_chapter', 'refresh_bank_total']))
+        self.comboBox_chapter.activated.connect(lambda: self.combobox_init(['refresh_bank_total']))
         self.pushButton_loaddata.clicked.connect(lambda: self.combobox_init(self.refresh_list))
         # 章节开始
         self.pushButton_start_chapter.clicked.connect(self.start_chapter)
@@ -526,6 +536,16 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         mutex.release()
         for item in teaching_query:
             self.comboBox_teaching.addItem(item[0], item[1])
+
+    def refresh_bank_total(self):
+        """
+        刷新题库量
+        :return:
+        """
+        chapter = self.comboBox_chapter.currentData()
+        if chapter:
+            bank_count = self.db_connect.session.query(ItemBankInit).filter(ItemBankInit.chaper_id == chapter).count()
+            self.lcdNumber_chapter.display(int(bank_count))
 
     def logout(self):
         self.browser.logout()

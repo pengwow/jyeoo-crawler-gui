@@ -461,7 +461,11 @@
        </widget>
       </item>
       <item row="2" column="3">
-       <widget class="QLCDNumber" name="lcdNumber_chapter"/>
+       <widget class="QLCDNumber" name="lcdNumber_chapter">
+        <property name="digitCount">
+         <number>6</number>
+        </property>
+       </widget>
       </item>
       <item row="2" column="2">
        <widget class="QLabel" name="label_3">
