@@ -83,6 +83,8 @@ class Worker(QThread):
         self.db_session = None
         self.working = True
         self.db_connect = None
+        # 是否断点续爬
+        self.item_bank_continue = False
         self.subject_code = ''
         self.subject_name = ''
         self.teaching = ''
@@ -158,7 +160,8 @@ class Worker(QThread):
         start_urls = self.get_details_url()
         for url in start_urls:
             self.driver.get(url)
-
+            self.driver.find_element_by_xpath('.//div[@class="pt1"]')
+            
         return
 
     def library_chapter(self):
@@ -543,9 +546,10 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         :return:
         """
         chapter = self.comboBox_chapter.currentData()
+        bank_count = 0
         if chapter:
             bank_count = self.db_connect.session.query(ItemBankInit).filter(ItemBankInit.chaper_id == chapter).count()
-            self.lcdNumber_chapter.display(int(bank_count))
+        self.lcdNumber_chapter.display(int(bank_count))
 
     def logout(self):
         self.browser.logout()
@@ -575,6 +579,8 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.statusbar.showMessage('正在启动无头浏览器')
         self.init_work_thread_data()
         self.thread.type = 'item_bank'
+        if self.radioButton_continue.isChecked():
+            self.thread.item_bank_continue = True
         self.thread.start()
 
     def start_details(self):

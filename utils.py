@@ -1,6 +1,8 @@
 # coding=utf-8
 import configparser
-import os
+
+
+# import os
 
 
 def get_db_config():
@@ -83,7 +85,6 @@ def set_config(section, args):
 
 
 def get_config(section):
-
     cfgpath = "config.ini"
     # 创建管理对象
     conf = configparser.ConfigParser()
@@ -94,8 +95,5 @@ def get_config(section):
 
 
 def get_phantomjs_path():
-    phantomjs = "third-party/phantomjs-2.1.1-windows/bin/phantomjs.exe"
+    phantomjs = "third-party/phantomjs.exe"
     return phantomjs
-
-
-

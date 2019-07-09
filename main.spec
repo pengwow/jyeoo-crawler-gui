@@ -1,8 +1,6 @@
 # -*- mode: python -*-
-# coding=utf-8
+
 block_cipher = None
-
-
 added_files = [
          ( 'images', 'images' ),
          ( 'config.ini', '.' ),
@@ -10,7 +8,7 @@ added_files = [
          ]
 
 a = Analysis(['main.py'],
-             pathex=['D:\\workspace\\Own project\\jyeoo-crawler-gui'],
+             pathex=['D:\\workspace\\OwnProject\\jyeoo-crawler-gui'],
              binaries=[],
              datas=added_files,
              hiddenimports=['pymysql'],
