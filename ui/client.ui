@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>997</width>
-    <height>744</height>
+    <width>1025</width>
+    <height>996</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,7 @@
       <x>10</x>
       <y>10</y>
       <width>961</width>
-      <height>122</height>
+      <height>131</height>
      </rect>
     </property>
     <property name="title">
@@ -87,12 +87,179 @@
      </item>
     </layout>
    </widget>
-   <widget class="QGroupBox" name="groupBox_2">
+   <widget class="QGroupBox" name="groupBox_3">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>390</y>
-      <width>961</width>
+      <y>160</y>
+      <width>981</width>
+      <height>451</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>筛选条件</string>
+    </property>
+    <widget class="QWidget" name="layoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>941</width>
+       <height>401</height>
+      </rect>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="2" column="2">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>已有：</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_11">
+        <property name="text">
+         <string>学科</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_10">
+        <property name="maximumSize">
+         <size>
+          <width>50</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>学级</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLabel" name="label_20">
+        <property name="text">
+         <string>教材</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
+       <widget class="QPushButton" name="pushButton_loaddata">
+        <property name="text">
+         <string>加载数据</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QComboBox" name="comboBox_teaching">
+        <property name="maximumSize">
+         <size>
+          <width>1000</width>
+          <height>16777215</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="comboBox_subject">
+        <property name="maximumSize">
+         <size>
+          <width>1000</width>
+          <height>16777215</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QComboBox" name="comboBox_grade">
+        <property name="maximumSize">
+         <size>
+          <width>1000</width>
+          <height>16777215</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QComboBox" name="comboBox_chapter">
+        <property name="maximumSize">
+         <size>
+          <width>1000</width>
+          <height>16777215</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="3">
+       <widget class="QLCDNumber" name="lcdNumber_chapter">
+        <property name="digitCount">
+         <number>6</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_18">
+        <property name="text">
+         <string>章节</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="comboBox_level">
+        <property name="minimumSize">
+         <size>
+          <width>300</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>1000</width>
+          <height>16777215</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_12">
+        <property name="maximumSize">
+         <size>
+          <width>50</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>年级</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QTreeWidget" name="treeWidget_chapter">
+        <property name="headerHidden">
+         <bool>true</bool>
+        </property>
+        <property name="columnCount">
+         <number>1</number>
+        </property>
+        <attribute name="headerVisible">
+         <bool>false</bool>
+        </attribute>
+        <column>
+         <property name="text">
+          <string notr="true">1</string>
+         </property>
+        </column>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_2">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>640</y>
+      <width>981</width>
       <height>271</height>
      </rect>
     </property>
@@ -114,35 +281,50 @@
           <rect>
            <x>20</x>
            <y>30</y>
-           <width>861</width>
-           <height>145</height>
+           <width>901</width>
+           <height>99</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
           <item row="0" column="2">
-           <widget class="QProgressBar" name="progressBar_chapter">
-            <property name="value">
-             <number>0</number>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <widget class="QLabel" name="label_5">
+              <property name="text">
+               <string>已有：</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLCDNumber" name="lcdNumber_from">
+              <property name="digitCount">
+               <number>6</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
-          <item row="0" column="0" colspan="2">
-           <widget class="QLabel" name="label">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_from">
             <property name="text">
-             <string>章节进度</string>
+             <string>来源</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
-           <widget class="QProgressBar" name="progressBar_crawler">
+          <item row="1" column="3">
+           <widget class="QPushButton" name="pushButton_start">
+            <property name="text">
+             <string>开始</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="comboBox_from">
             <property name="maximumSize">
              <size>
-              <width>500</width>
+              <width>1000</width>
               <height>16777215</height>
              </size>
-            </property>
-            <property name="value">
-             <number>0</number>
             </property>
            </widget>
           </item>
@@ -165,17 +347,16 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_19">
-            <property name="text">
-             <string>次数</string>
+          <item row="1" column="2">
+           <widget class="QProgressBar" name="progressBar_crawler">
+            <property name="maximumSize">
+             <size>
+              <width>500</width>
+              <height>16777215</height>
+             </size>
             </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
-           <widget class="QPushButton" name="pushButton_start">
-            <property name="text">
-             <string>开始</string>
+            <property name="value">
+             <number>0</number>
             </property>
            </widget>
           </item>
@@ -226,6 +407,13 @@
              </widget>
             </item>
            </layout>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_19">
+            <property name="text">
+             <string>次数</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -335,199 +523,13 @@
      </item>
     </layout>
    </widget>
-   <widget class="QGroupBox" name="groupBox_3">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>140</y>
-      <width>961</width>
-      <height>221</height>
-     </rect>
-    </property>
-    <property name="title">
-     <string>筛选条件</string>
-    </property>
-    <widget class="QWidget" name="layoutWidget">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>40</y>
-       <width>911</width>
-       <height>145</height>
-      </rect>
-     </property>
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_10">
-        <property name="maximumSize">
-         <size>
-          <width>50</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>学级</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QComboBox" name="comboBox_level">
-        <property name="minimumSize">
-         <size>
-          <width>300</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>1000</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>30</width>
-            <height>24</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_12">
-          <property name="maximumSize">
-           <size>
-            <width>50</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>年级</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item row="0" column="3">
-       <widget class="QComboBox" name="comboBox_grade">
-        <property name="maximumSize">
-         <size>
-          <width>1000</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="4">
-       <widget class="QPushButton" name="pushButton_loaddata">
-        <property name="text">
-         <string>加载数据</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_11">
-        <property name="text">
-         <string>学科</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QComboBox" name="comboBox_subject">
-        <property name="maximumSize">
-         <size>
-          <width>1000</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <spacer name="horizontalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_20">
-          <property name="text">
-           <string>教材</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item row="1" column="3">
-       <widget class="QComboBox" name="comboBox_teaching">
-        <property name="maximumSize">
-         <size>
-          <width>1000</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_18">
-        <property name="text">
-         <string>章节</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QComboBox" name="comboBox_chapter">
-        <property name="maximumSize">
-         <size>
-          <width>1000</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QLCDNumber" name="lcdNumber_chapter">
-        <property name="digitCount">
-         <number>6</number>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>已有数据量：</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </widget>
-   <zorder>groupBox_2</zorder>
-   <zorder>groupBox</zorder>
-   <zorder>groupBox_3</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>997</width>
+     <width>1025</width>
      <height>41</height>
     </rect>
    </property>

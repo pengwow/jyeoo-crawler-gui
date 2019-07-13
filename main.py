@@ -5,7 +5,7 @@ from lxml import etree
 from ui import client
 from ui import DB_dialog, WebView
 from webview import MainWindow
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QMessageBox, QTreeWidgetItem
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QPixmap, QImage
 import utils
@@ -184,11 +184,8 @@ class Worker(QThread):
         if self.teaching_name != teaching or self.level_name != level_name:
             self.message_box.emit('警告', "没有数据！")
             return
-        # WebDriverWait(self.driver, 30).until(
-        #     ec.visibility_of_element_located((By.XPATH, '//ul[@id="JYE_POINT_TREE_HOLDER"]//li')))
         et = etree.HTML(self.driver.page_source)
         library_id = self.teaching
-        # sub_obj = self.driver.find_elements_by_xpath('//ul[@id="JYE_POINT_TREE_HOLDER"]//li')
         sub_obj = et.xpath('//ul[@id="JYE_POINT_TREE_HOLDER"]//li')
         chapters_list = list()
 
@@ -419,7 +416,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.thread.db_session = self.db_connect.session
         self.thread.sinOut.connect(self.crawler_signal)
         self.thread.crawler_progress.connect(self.crawler_progress)
-        self.thread.chapter_progress.connect(self.chapter_progress)
+        # self.thread.chapter_progress.connect(self.chapter_progress)
         self.thread.crawler_chapter_progress.connect(self.crawler_chapter_progress)
         self.thread.message_box.connect(self.message_box)
 
@@ -491,6 +488,20 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         mutex.release()
         for item in chapters:
             self.comboBox_chapter.addItem(item[0], item[1])
+
+        a = ['1', '11', '12', '13', '2', '21', '22', '23']
+        # 你的数据按照
+        # 【root，child1，child11，child12，child13，child2，child21，child22】
+        # 这种顺序排列
+        self.treeWidget_chapter.setColumnCount(5)
+
+        root = QTreeWidgetItem(self.treeWidget_chapter)
+        root.setText(0, 'root')
+        ddd = QTreeWidgetItem(self.treeWidget_chapter)
+        ddd.setText(0, 'ddd')
+
+
+
 
     def refresh_grade(self):
         """
@@ -609,12 +620,12 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         else:
             self.progressBar_crawler.setValue(current)
 
-    def chapter_progress(self, current, maximum):
-        self.progressBar_chapter.setMaximum(maximum)
-        if current >= maximum:
-            self.progressBar_chapter.setValue(maximum)
-        else:
-            self.progressBar_chapter.setValue(current)
+    # def chapter_progress(self, current, maximum):
+    #     self.progressBar_chapter.setMaximum(maximum)
+    #     if current >= maximum:
+    #         self.progressBar_chapter.setValue(maximum)
+    #     else:
+    #         self.progressBar_chapter.setValue(current)
 
     def crawler_chapter_progress(self, current, maximum):
         self.progressBar_crawler_chapter.setMaximum(maximum)
