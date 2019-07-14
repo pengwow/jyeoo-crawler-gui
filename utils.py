@@ -1,5 +1,6 @@
 # coding=utf-8
 import configparser
+import uuid
 
 
 # import os
@@ -97,3 +98,55 @@ def get_config(section):
 def get_phantomjs_path():
     phantomjs = "third-party/phantomjs.exe"
     return phantomjs
+
+
+def recursive_get_li(parent_id, library_id, xpath_list):
+    """
+    递归获取li
+    :param parent_id:父节点ID
+    :param library_id:
+    :param xpath_list:
+    :return:
+    """
+    re_list = list()
+    if xpath_list:
+        li = xpath_list.xpath('./ul/li')
+        for item in li:
+            temp_dict = dict()
+            pk = item.attrib.get('pk')
+            nm = item.attrib.get('nm')
+            temp_dict['id'] = str(uuid.uuid1())
+            temp_dict['parent_id'] = parent_id
+            temp_dict['library_id'] = library_id
+            temp_dict['pk'] = pk
+            temp_dict['name'] = nm
+            child = recursive_get_li(temp_dict['id'], library_id, item)
+            temp_dict['child'] = child
+            re_list.append(temp_dict)
+    return re_list
+
+
+def split_list(src_list):
+    """
+    拆分列表
+    :param src_list:
+    :return:
+    """
+    new_list = list()
+    for item in src_list:
+        child = item.pop('child')
+        new_list.append(item)
+        if child:
+            child = split_list(child)
+            new_list.extend(child)
+    return new_list
+
+
+def merge_list(src_list):
+    """
+    合并列表
+    :param src_list:
+    :return:
+    """
+    for item in src_list:
+        pass

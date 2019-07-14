@@ -86,6 +86,7 @@ class Worker(QThread):
         # 是否断点续爬
         self.item_bank_continue = False
         self.subject_code = ''
+        self.from_code = ''
         self.subject_name = ''
         self.teaching = ''
         self.teaching_name = ''
@@ -161,7 +162,7 @@ class Worker(QThread):
         for url in start_urls:
             self.driver.get(url)
             self.driver.find_element_by_xpath('.//div[@class="pt1"]')
-            
+
         return
 
     def library_chapter(self):
@@ -176,6 +177,7 @@ class Worker(QThread):
                 ec.visibility_of_element_located((By.XPATH, '//div[@class="tree-head"]/span[@id="spanEdition"]')))
         except TimeoutException as e:
             self.sinOut.emit('超时！！！ %s' % str(e))
+            self.driver.get_screenshot_as_file('./error.png')
             return
         teaching = self.driver.find_element_by_xpath('//div[@class="tree-head"]/span[@id="spanEdition"]').text
         level_name = self.driver.find_element_by_xpath('//div[@class="tree-head"]/span[@id="spanGrade"]').text
@@ -186,7 +188,7 @@ class Worker(QThread):
             return
         et = etree.HTML(self.driver.page_source)
         library_id = self.teaching
-        sub_obj = et.xpath('//ul[@id="JYE_POINT_TREE_HOLDER"]//li')
+        sub_obj = et.xpath('//ul[@id="JYE_POINT_TREE_HOLDER"]/li')
         chapters_list = list()
 
         total = len(sub_obj)
@@ -195,27 +197,18 @@ class Worker(QThread):
             lc_item = dict()
             lc_item['id'] = str(uuid.uuid1())
             pk = item.attrib.get('pk')
-
+            nm = item.attrib.get('nm')
+            child = utils.recursive_get_li(lc_item['id'], library_id, item)
             lc_item['pk'] = pk
-            temp_list = pk.split('~')
-
-            lc_item['name'] = item.attrib.get('nm')
-
-            if temp_list[-1]:
-                lc_item['library_id'] = library_id
-                parent_id = temp_list[temp_list.index(temp_list[-1]) - 1]
-                lc_item['parent_id'] = ''
-                if parent_id != lc_item['library_id']:
-                    lc_item['parent_id'] = parent_id
-            else:
-                lc_item['library_id'] = library_id
-                parent_id = temp_list[temp_list.index(temp_list[-2]) - 1]
-                lc_item['parent_id'] = ''
-                if parent_id != lc_item['library_id']:
-                    lc_item['parent_id'] = parent_id
+            lc_item['parent_id'] = ''
+            lc_item['library_id'] = library_id
+            lc_item['name'] = nm
+            lc_item['child'] = child
             chapters_list.append(lc_item)
             current_count += 1
             self.crawler_chapter_progress.emit(current_count, total)
+        self.sinOut.emit('正在解析入库')
+
         if chapters_list:
             chapters = self.db_connect.session.query(LibraryChapter.name, LibraryChapter.id).filter(
                 LibraryChapter.library_id == library_id)
@@ -223,9 +216,12 @@ class Worker(QThread):
             chapters.delete()
             self.db_connect.session.commit()
             mutex.release()
-            for item in chapters_list:
+            new_list = utils.split_list(chapters_list)
+            for item in new_list:
                 mutex.acquire()
-                self.db_session.add(LibraryChapter(**item))
+                if 'child' in item:
+                    del item['child']
+                self.db_connect.add(LibraryChapter(**item))
                 mutex.release()
         self.sinOut.emit('章节爬取完成，重新加载查看')
 
@@ -401,6 +397,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
                              'refresh_teaching',
                              'refresh_chapter',
                              'refresh_bank_total',
+                             'refresh_from'
                              ]
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
@@ -449,8 +446,13 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.comboBox_subject.activated.connect(
             lambda: self.combobox_init(['refresh_teaching', 'refresh_chapter', 'refresh_bank_total']))
         self.comboBox_teaching.activated.connect(lambda: self.combobox_init(['refresh_chapter', 'refresh_bank_total']))
-        self.comboBox_chapter.activated.connect(lambda: self.combobox_init(['refresh_bank_total']))
+
         self.pushButton_loaddata.clicked.connect(lambda: self.combobox_init(self.refresh_list))
+        # 章节点击触发
+        # 原章节切换触发
+        # self.comboBox_chapter.activated.connect(lambda: self.combobox_init(['refresh_bank_total']))
+        self.treeWidget_chapter.clicked.connect(lambda: self.combobox_init(['refresh_bank_total']))
+        self.treeWidget_chapter.clicked.connect(self.tree_chapter)
         # 章节开始
         self.pushButton_start_chapter.clicked.connect(self.start_chapter)
         # 详情页开始
@@ -464,7 +466,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
 
     def refresh_level(self):
         """
-        学级
+        刷新学级
         :return:
         """
         self.comboBox_level.clear()
@@ -475,33 +477,59 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         for item in levels:
             self.comboBox_level.addItem(item[0], item[1])
 
+    def refresh_from(self):
+        """
+        刷新来源
+        :return:
+        """
+        self.comboBox_from.clear()
+        mutex.acquire()
+        level_code = self.comboBox_level.currentData()
+        levels = self.db_connect.session.query(ItemFrom.from_name, ItemFrom.from_code).filter(
+            ItemFrom.level_code == level_code)
+        mutex.release()
+        # 默认为全部
+        self.comboBox_from.addItem('全部', '')
+        for item in levels:
+            self.comboBox_from.addItem(item[0], item[1])
+
     def refresh_chapter(self):
         """
         章节
         :return:
         """
         self.comboBox_chapter.clear()
+        self.treeWidget_chapter.clear()
+        self.treeWidget_chapter.setColumnCount(1)
         library_id = self.comboBox_teaching.currentData()
         mutex.acquire()
-        chapters = self.db_connect.session.query(LibraryChapter.name, LibraryChapter.id).filter(
+        chapters = self.db_connect.session.query(LibraryChapter.name, LibraryChapter.id,
+                                                 LibraryChapter.parent_id, LibraryChapter.pk).filter(
             LibraryChapter.library_id == library_id)
         mutex.release()
+        tree_dict = dict()
         for item in chapters:
             self.comboBox_chapter.addItem(item[0], item[1])
+            if '' == item[2]:
+                tree_item = QTreeWidgetItem(self.treeWidget_chapter)
+                tree_item.setText(0, item[0])
+                tree_item.setText(1, item[1])
+                tree_item.setText(2, item[3])
+                tree_dict[item[1]] = {'item': tree_item, 'parent_id': ''}
+            else:
+                tree_item = QTreeWidgetItem()
+                tree_item.setText(0, item[0])
+                tree_item.setText(1, item[1])
+                tree_item.setText(2, item[3])
+                tree_dict[item[1]] = {'item': tree_item, 'parent_id': item[2]}
 
-        a = ['1', '11', '12', '13', '2', '21', '22', '23']
-        # 你的数据按照
-        # 【root，child1，child11，child12，child13，child2，child21，child22】
-        # 这种顺序排列
-        self.treeWidget_chapter.setColumnCount(5)
-
-        root = QTreeWidgetItem(self.treeWidget_chapter)
-        root.setText(0, 'root')
-        ddd = QTreeWidgetItem(self.treeWidget_chapter)
-        ddd.setText(0, 'ddd')
-
-
-
+        for key, value in tree_dict.items():
+            parent_id = value.get('parent_id')
+            if parent_id:
+                if not tree_dict.get(parent_id):
+                    self.message_box('章节获取错误', '请重新获取此章节')
+                    break
+                tree_dict[parent_id]['item'].addChild(value.get('item'))
 
     def refresh_grade(self):
         """
@@ -556,11 +584,28 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         刷新题库量
         :return:
         """
-        chapter = self.comboBox_chapter.currentData()
+        # 0=name 1=chapter_id 2=pk
+        chapter_current_item = self.treeWidget_chapter.currentItem()
+        if not chapter_current_item:
+            return
+        chapter = chapter_current_item.text(1)
+        # chapter = self.comboBox_chapter.currentData()
         bank_count = 0
         if chapter:
             bank_count = self.db_connect.session.query(ItemBankInit).filter(ItemBankInit.chaper_id == chapter).count()
         self.lcdNumber_chapter.display(int(bank_count))
+
+    def tree_chapter(self):
+        """
+        章节树点击操作
+        :return:
+        """
+        current_item = self.treeWidget_chapter.currentItem()
+        name = current_item.text(0)
+        chapter_id = current_item.text(1)
+        pk = current_item.text(2)
+        self.comboBox_chapter.clear()
+        self.comboBox_chapter.addItem(name,chapter_id)
 
     def logout(self):
         self.browser.logout()
@@ -585,6 +630,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.thread.teaching_name = self.comboBox_teaching.currentText()
         self.thread.crawl_maximum = int(self.spinBox_crawlMaximum.text())
         self.thread.db_connect = self.db_connect
+        self.thread.from_code = self.comboBox_from.currentData()
 
     def start(self):
         self.statusbar.showMessage('正在启动无头浏览器')

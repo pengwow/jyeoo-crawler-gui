@@ -122,7 +122,7 @@ class LibraryChapter(Base):
     # 父节点
     parent_id = Column(String(36))
     # 直接索引
-    pk = Column(String(80))
+    pk = Column(String(128))
     # 是否已经查询过
     is_finish = Column(INT, default=0)
 
@@ -213,6 +213,22 @@ class ItemBankInit(Base):
     chaper_id = Column(String(36))
     # 是否已经查询过
     is_finish = Column(INT, default=0)
+
+
+class ItemFrom(Base):
+    # 表的名字:
+    __tablename__ = 'item_from'
+    # 主键 自增ID
+    id = Column(INT, autoincrement=True, primary_key=True)
+    # 授课层级
+    level_name = Column(String(20))
+    # 授课层级编码
+    level_code = Column(String(10))
+    # 来源名称
+    from_name = Column(String(20))
+    # 来源编码
+    from_code = Column(String(10))
+
 
 
 class DBSession(object):
