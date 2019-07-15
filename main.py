@@ -158,10 +158,41 @@ class Worker(QThread):
         详情页爬取方法
         :return:
         """
-        start_urls = self.get_details_url()
-        for url in start_urls:
-            self.driver.get(url)
-            self.driver.find_element_by_xpath('.//div[@class="pt1"]')
+        if not self.chapter_id:
+            self.sinOut.emit('错误！章节获取失败，可能未选择章节！')
+        else:
+            start_urls = self.get_details_url()
+            for item in start_urls:
+                bank_item = dict()
+                self.driver.get(item.get('detail_page_url'))
+                et = etree.HTML(self.driver.page_source)
+                year_html = et.xpath('.//div[@class="pt1"]/a/text()')
+                year_area = utils.txt_wrap_by('（', '）', year_html[0])
+                if not year_area:
+                    year_area = utils.txt_wrap_by('(', ')', year_html[0])
+                if year_area:
+                    bank_item['year_code'] = year_area.split('•')[0]
+                bank_item['used_times'] = ''
+                bank_item['exam_times'] = ''
+                bank_item['year_area'] = year_area
+                fieldset_xpath = '//div[@id="{fieldset_id}"]'.format(fieldset_id=item.get('fieldset_id'))
+                detail_data = et.xpath(fieldset_xpath)
+                # 考题
+                bank_item['context'] = str(detail_data[0].xpath('.//div[@class="pt1"]/text()'))
+                bank_item['anwser'] = self.driver.page_source
+                fieldtip_left = detail_data[0].xpath('.//div[@class="fieldtip-left"]')
+                record_time = fieldtip_left[0].xpath('.//span[1]/text()')
+                used_times = fieldtip_left[0].xpath('.//span[2]/text()')
+                exam_times = fieldtip_left[0].xpath('.//span[3]/text()')
+                difficult_code = fieldtip_left[0].xpath('.//span[4]/text()')
+                if record_time:
+                    bank_item['record_time'] = record_time[0].replace("：", ":").split(':')[1]
+                if used_times:
+                    bank_item['used_times'] = used_times[0].replace("：", ":").split(':')[1]
+                if exam_times:
+                    bank_item['exam_times'] = exam_times[0].replace("：", ":").split(':')[1]
+                if difficult_code:
+                    bank_item['difficult_code'] = difficult_code[0].replace("：", ":").split(':')[1]
 
         return
 
@@ -290,10 +321,7 @@ class Worker(QThread):
                     "已经爬取完 {cur_page} / {total_pages} 【结束】".format(cur_page=cur_page, total_pages=total_pages))
                 break
 
-            if next_page > self.crawl_maximum:
-                # 判断是否已经到达爬取次数
-                self.sinOut.emit("已到爬取的请求数量 %s 【结束】" % str(next_page))
-                break
+
 
             fieldset = self.driver.find_elements_by_xpath('.//fieldset')
             for item in fieldset:
@@ -314,6 +342,10 @@ class Worker(QThread):
                                                                             count=already_crawler_count,
                                                                             id=fieldset_id
                                                                             ))
+            if next_page > self.crawl_maximum:
+                # 判断是否已经到达爬取次数
+                self.sinOut.emit("已到爬取的请求数量 %s 【结束】" % str(next_page))
+                break
             gopage = 'goPage({page},this)'.format(page=next_page)
             self.driver.execute_script(gopage)
             # 滚动页面
@@ -324,7 +356,7 @@ class Worker(QThread):
         item_bank_init['fieldset_id'] = fieldset_id
         item_bank_init['detail_page_url'] = detail_page_url
         item_bank_init['ques_url'] = args.get('url')
-        item_bank_init['from_code'] = self.subject_code
+        item_bank_init['from_code'] = self.from_code
         item_bank_init['item_style_code'] = args.get('item_style_code')
         item_bank_init['library_id'] = args.get('library_id')
         item_bank_init['chaper_id'] = self.chapter_id
@@ -340,7 +372,7 @@ class Worker(QThread):
         """
         re_dict = dict()
         query = self.db_session.query(LibraryChapter).filter(LibraryChapter.id == chapter_id)
-        url_str = 'http://www.jyeoo.com/{subject}/ques/search?f=0&q={pk}'
+        url_str = 'http://www.jyeoo.com/{subject}/ques/search?f=0&q={pk}&so={from_code}'
         last_data = None
         # 遍历章节
         for item in query:
@@ -365,6 +397,8 @@ class Worker(QThread):
             temp_dict['item_style_code'] = ''
             # 题类
             temp_dict['field_code'] = ''
+            # 来源
+            temp_dict['from_code'] = self.from_code
             temp_dict['url'] = url_str.format(**temp_dict)
             re_dict[item.id] = temp_dict
             yield re_dict
@@ -379,11 +413,19 @@ class Worker(QThread):
         获取详情页url
         :return: list
         """
-        re_list = list()
+
         item_bank_init = self.db_session.query(ItemBankInit).filter(ItemBankInit.chaper_id == self.chapter_id)
         for item in item_bank_init:
-            re_list.append(item.detail_page_url)
-        return re_list
+            re_dict = dict(
+                detail_page_url=item.detail_page_url,
+                from_code=item.from_code,
+                chaper_id=item.chaper_id,
+                item_style_code=item.item_style_code,
+                library_id=item.library_id,
+                fieldset_id=item.fieldset_id
+                                )
+            yield re_dict
+
 
 
 class MyWindow(QMainWindow, client.Ui_MainWindow):
@@ -527,7 +569,10 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
             parent_id = value.get('parent_id')
             if parent_id:
                 if not tree_dict.get(parent_id):
-                    self.message_box('章节获取错误', '请重新获取此章节')
+                    result = self.message_box_choice('章节获取错误', '请重新获取此章节')
+                    if result == QMessageBox.Ok:
+                        # 重新爬取章节
+                        self.start_chapter()
                     break
                 tree_dict[parent_id]['item'].addChild(value.get('item'))
 
@@ -605,7 +650,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         chapter_id = current_item.text(1)
         pk = current_item.text(2)
         self.comboBox_chapter.clear()
-        self.comboBox_chapter.addItem(name,chapter_id)
+        self.comboBox_chapter.addItem(name, chapter_id)
 
     def logout(self):
         self.browser.logout()
@@ -684,6 +729,11 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
     def message_box(self, title, content):
         message_box = QMessageBox()
         message_box.warning(self, title, content, QMessageBox.Ok)
+
+    def message_box_choice(self, title, content):
+        message_box = QMessageBox()
+        result = message_box.warning(self, title, content, QMessageBox.Ok | QMessageBox.Cancel)
+        return result
 
 
 if __name__ == '__main__':

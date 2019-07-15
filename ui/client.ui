@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1141</width>
-    <height>1254</height>
+    <width>1010</width>
+    <height>1084</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -99,7 +99,7 @@
     <property name="title">
      <string>筛选条件</string>
     </property>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -263,17 +263,14 @@
       </item>
      </layout>
     </widget>
-    <zorder>layoutWidget</zorder>
-    <zorder>treeWidget_chapter</zorder>
-    <zorder>treeWidget_chapter</zorder>
    </widget>
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>710</y>
       <width>981</width>
-      <height>271</height>
+      <height>291</height>
      </rect>
     </property>
     <property name="title">
@@ -478,7 +475,7 @@
           <item>
            <widget class="QPushButton" name="pushButton_start_details">
             <property name="enabled">
-             <bool>false</bool>
+             <bool>true</bool>
             </property>
             <property name="text">
              <string>开始</string>
@@ -541,7 +538,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1141</width>
+     <width>1010</width>
      <height>41</height>
     </rect>
    </property>

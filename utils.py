@@ -150,3 +150,13 @@ def merge_list(src_list):
     """
     for item in src_list:
         pass
+
+
+# 取字符串中两个符号之间的东东
+def txt_wrap_by(start_str, end, html):
+    start = html.find(start_str)
+    if start >= 0:
+        start += len(start_str)
+        end = html.find(end, start)
+        if end >= 0:
+            return html[start:end].strip()
