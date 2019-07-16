@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1010</width>
-    <height>1084</height>
+    <width>982</width>
+    <height>1069</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -292,10 +292,70 @@
            <x>20</x>
            <y>30</y>
            <width>891</width>
-           <height>139</height>
+           <height>145</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
+          <item row="0" column="1">
+           <widget class="QLCDNumber" name="lcdNumber_from">
+            <property name="digitCount">
+             <number>6</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QSpinBox" name="spinBox_crawlMaximum">
+            <property name="maximumSize">
+             <size>
+              <width>1000</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>5000</number>
+            </property>
+            <property name="value">
+             <number>100</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_19">
+            <property name="text">
+             <string>次数</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QProgressBar" name="progressBar_crawler">
+            <property name="maximumSize">
+             <size>
+              <width>500</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="value">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QPushButton" name="pushButton_start">
+            <property name="text">
+             <string>开始</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_from">
+            <property name="text">
+             <string>来源</string>
+            </property>
+           </widget>
+          </item>
           <item row="0" column="3">
            <layout class="QHBoxLayout" name="horizontalLayout_5">
             <item>
@@ -344,53 +404,7 @@
             </item>
            </layout>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_19">
-            <property name="text">
-             <string>次数</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QSpinBox" name="spinBox_crawlMaximum">
-            <property name="maximumSize">
-             <size>
-              <width>1000</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="minimum">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <number>5000</number>
-            </property>
-            <property name="value">
-             <number>100</number>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QProgressBar" name="progressBar_crawler">
-            <property name="maximumSize">
-             <size>
-              <width>500</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="value">
-             <number>0</number>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_from">
-            <property name="text">
-             <string>来源</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
+          <item row="0" column="2">
            <widget class="QComboBox" name="comboBox_from">
             <property name="maximumSize">
              <size>
@@ -398,30 +412,6 @@
               <height>16777215</height>
              </size>
             </property>
-           </widget>
-          </item>
-          <item row="1" column="3">
-           <widget class="QPushButton" name="pushButton_start">
-            <property name="text">
-             <string>开始</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="2">
-           <widget class="QSplitter" name="splitter">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <widget class="QLabel" name="label_5">
-             <property name="text">
-              <string>已有：</string>
-             </property>
-            </widget>
-            <widget class="QLCDNumber" name="lcdNumber_from">
-             <property name="digitCount">
-              <number>6</number>
-             </property>
-            </widget>
            </widget>
           </item>
          </layout>
@@ -532,13 +522,20 @@
      </item>
     </layout>
    </widget>
+   <zorder>groupBox</zorder>
+   <zorder>groupBox_3</zorder>
+   <zorder>groupBox_2</zorder>
+   <zorder>splitter</zorder>
+   <zorder></zorder>
+   <zorder>comboBox_from</zorder>
+   <zorder></zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1010</width>
+     <width>982</width>
      <height>41</height>
     </rect>
    </property>

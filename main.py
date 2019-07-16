@@ -76,6 +76,7 @@ class Worker(QThread):
     chapter_progress = pyqtSignal(int, int)  # 章节进度条信号
     crawler_chapter_progress = pyqtSignal(int, int)  # 爬取章节进度条信号
     message_box = pyqtSignal(str, str)  # 弹窗提示
+    execution_method = pyqtSignal(str)  # 执行方法
 
     def __init__(self, parent=None):
         super(Worker, self).__init__(parent)
@@ -109,6 +110,11 @@ class Worker(QThread):
             'path': '/',
             'expiry': int(time.time()) + 10000000
         }
+        self.method_list = ['self.pushButton_start_chapter',
+                            'self.pushButton_loaddata',
+                            'self.pushButton_start',
+                            'self.pushButton_start_details',
+                            ]
 
     def __del__(self):
         self.working = False
@@ -140,11 +146,26 @@ class Worker(QThread):
             self.cookie_dict['value'] = v
             self.driver.add_cookie(self.cookie_dict)
 
+    def set_button_enabled(self, status):
+        """
+        批量设置按钮状态
+        :param status: True/False
+        :return:
+        """
+        if status:
+            status_str = 'True'
+        else:
+            status_str = 'False'
+        for item in self.method_list:
+            method = item + '.setEnabled({status})'.format(status=status_str)
+            self.execution_method.emit(method)
+
     def run(self):
 
+        # 禁用按钮
+        self.set_button_enabled(False)
         if not self.driver:
             self.init_phantomjs_driver()
-
         # 发出信号
         self.sinOut.emit("无头浏览器启动完成")
         # 添加cookie
@@ -152,6 +173,8 @@ class Worker(QThread):
         if self.type:
             # 动态执行方法
             eval('self.{func}()'.format(func=self.type))
+        # 启用按钮
+        self.set_button_enabled(True)
 
     def item_bank_details(self):
         """
@@ -193,8 +216,34 @@ class Worker(QThread):
                     bank_item['exam_times'] = exam_times[0].replace("：", ":").split(':')[1]
                 if difficult_code:
                     bank_item['difficult_code'] = difficult_code[0].replace("：", ":").split(':')[1]
-
+                bank_item['from_code'] = self.from_code
+                bank_item['url'] = item.get('detail_page_url')
+                bank_item['chaper_id'] = item.get('chaper_id')
+                bank_item['library_id'] = item.get('library_id')
+                bank_item['item_style_code'] = item.get('item_style_code')
+                mutex.acquire()
+                self.db_connect.add(ItemBank(**bank_item))
+                mutex.release()
         return
+
+    @staticmethod
+    def update_chapter_pk_id(old_chapters_id, pk, chapters_list):
+        """
+        更新章节数据中的全部id
+        :param old_chapters_id:
+        :param pk:
+        :param chapters_list:
+        :return:
+        """
+        relational_dict = dict()
+        for item in chapters_list:
+            if item.get('pk') == pk:
+                relational_dict[item['id']] = old_chapters_id
+                item['id'] = old_chapters_id
+        for item in chapters_list:
+            if item.get('parent_id'):
+                item['parent_id'] = relational_dict.get(item['parent_id'])
+        return chapters_list
 
     def library_chapter(self):
         """
@@ -241,13 +290,28 @@ class Worker(QThread):
         self.sinOut.emit('正在解析入库')
 
         if chapters_list:
-            chapters = self.db_connect.session.query(LibraryChapter.name, LibraryChapter.id).filter(
-                LibraryChapter.library_id == library_id)
             mutex.acquire()
-            chapters.delete()
-            self.db_connect.session.commit()
-            mutex.release()
+            chapters = self.db_connect.session.query(LibraryChapter.name, LibraryChapter.id, LibraryChapter.pk).filter(
+                LibraryChapter.library_id == library_id)
             new_list = utils.split_list(chapters_list)
+            if chapters.count() > 0:
+                # 如果章节存在数据则进行更新
+                relational_dict = dict()
+                for item in chapters:
+                    # new_list = self.update_chapter_pk_id(item.id, item.pk, new_list)
+                    for item2 in new_list:
+                        if item2.get('pk') == item.pk:
+                            relational_dict[item2['id']] = item.id
+                            item2['id'] = item.id
+                            break
+                    for item3 in new_list:
+                        if item3.get('parent_id') and relational_dict.get(item3['parent_id']):
+                            item3['parent_id'] = relational_dict.get(item3['parent_id'])
+                chapters.delete()
+                self.db_connect.session.commit()
+            mutex.release()
+
+            # 插入新值
             for item in new_list:
                 mutex.acquire()
                 if 'child' in item:
@@ -321,8 +385,6 @@ class Worker(QThread):
                     "已经爬取完 {cur_page} / {total_pages} 【结束】".format(cur_page=cur_page, total_pages=total_pages))
                 break
 
-
-
             fieldset = self.driver.find_elements_by_xpath('.//fieldset')
             for item in fieldset:
                 fieldset_id = item.get_attribute('id')
@@ -344,7 +406,7 @@ class Worker(QThread):
                                                                             ))
             if next_page > self.crawl_maximum:
                 # 判断是否已经到达爬取次数
-                self.sinOut.emit("已到爬取的请求数量 %s 【结束】" % str(next_page))
+                self.sinOut.emit("已到爬取的请求数量 %s 【结束】" % str(self.crawl_maximum))
                 break
             gopage = 'goPage({page},this)'.format(page=next_page)
             self.driver.execute_script(gopage)
@@ -423,9 +485,8 @@ class Worker(QThread):
                 item_style_code=item.item_style_code,
                 library_id=item.library_id,
                 fieldset_id=item.fieldset_id
-                                )
+            )
             yield re_dict
-
 
 
 class MyWindow(QMainWindow, client.Ui_MainWindow):
@@ -458,6 +519,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         # self.thread.chapter_progress.connect(self.chapter_progress)
         self.thread.crawler_chapter_progress.connect(self.crawler_chapter_progress)
         self.thread.message_box.connect(self.message_box)
+        self.thread.execution_method.connect(self.execution_method)
 
     @staticmethod
     def init_db_connect():
@@ -548,7 +610,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         chapters = self.db_connect.session.query(LibraryChapter.name, LibraryChapter.id,
                                                  LibraryChapter.parent_id, LibraryChapter.pk).filter(
             LibraryChapter.library_id == library_id)
-        mutex.release()
+
         tree_dict = dict()
         for item in chapters:
             self.comboBox_chapter.addItem(item[0], item[1])
@@ -564,7 +626,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
                 tree_item.setText(1, item[1])
                 tree_item.setText(2, item[3])
                 tree_dict[item[1]] = {'item': tree_item, 'parent_id': item[2]}
-
+        mutex.release()
         for key, value in tree_dict.items():
             parent_id = value.get('parent_id')
             if parent_id:
@@ -648,7 +710,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         current_item = self.treeWidget_chapter.currentItem()
         name = current_item.text(0)
         chapter_id = current_item.text(1)
-        pk = current_item.text(2)
+        # pk = current_item.text(2)
         self.comboBox_chapter.clear()
         self.comboBox_chapter.addItem(name, chapter_id)
 
@@ -694,7 +756,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
     def start_chapter(self):
         self.statusbar.showMessage('正在启动无头浏览器')
         message_box = QMessageBox()
-        result = message_box.warning(self, "警告", "警告！会删除章节数据，已爬取的题库将会影响！", QMessageBox.Ok | QMessageBox.Cancel)
+        result = message_box.warning(self, "警告", "警告！将会重建章节数据。", QMessageBox.Ok | QMessageBox.Cancel)
         if result == QMessageBox.Cancel:
             return
         self.init_work_thread_data()
@@ -734,6 +796,13 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         message_box = QMessageBox()
         result = message_box.warning(self, title, content, QMessageBox.Ok | QMessageBox.Cancel)
         return result
+
+    def execution_method(self, method):
+        # self.statusbar.showMessage('执行方法：%s' % method)
+        eval(method)
+
+    def __del__(self):
+        self.db_connect.session.close_all()
 
 
 if __name__ == '__main__':

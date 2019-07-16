@@ -128,7 +128,7 @@ def recursive_get_li(parent_id, library_id, xpath_list):
 
 def split_list(src_list):
     """
-    拆分列表
+    拆分列表,层级关系拆成一层
     :param src_list:
     :return:
     """
