@@ -12,6 +12,24 @@
 
 4.目前已爬取真实课题ID为目标的半自动爬虫工具，后期待加入爬取详情页数据。详情页数据每次访问为一个真实请求，并且无账号也可访问。故为第二目标
 
+## 操作方法
+### 环境
+安装依赖包环境
+`pip install -r requirements.txt`
+
+### 编译生成windows可执行程序
+`pyinstaller main.spec`
+
+### 开发调试
+`python main.py`
+
+
+
+
+
+
+
+
 
 
 

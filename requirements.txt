@@ -3,8 +3,8 @@
 # 需要额外的python包，可直接在文件后面添加
 # 请确保指定的包和版本号，可通过pip安装
 requests==2.21.0
-Scrapy==1.6.0
-splash==3.3.1
+#Scrapy==1.6.0
+#splash==3.3.1
 selenium==3.141.0
 scrapy-splash==0.7.2
 sqlalchemy
@@ -20,3 +20,4 @@ pyqt5
 sip
 lxml
 pyupdater
+pyinstaller
