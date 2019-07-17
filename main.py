@@ -9,6 +9,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QMessageBox, QTr
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QPixmap, QImage
 import utils
+import random
+from urllib import request
+from bs4 import BeautifulSoup
 from mysql_model import *
 from multiprocessing import Lock
 # 自动化引入
@@ -27,6 +30,8 @@ warnings.filterwarnings("ignore")
 jyeoo_qqlogin_url = 'http://www.jyeoo.com/api/qqlogin?u=http://www.jyeoo.com/'
 # 详情页面
 DETAIL_PAGE = 'http://www.jyeoo.com/{subject}/ques/detail/{fieldset}'
+# 知识点页面
+POINTCARD_PAGE = 'http://www.jyeoo.com/{subject}/api/pointcard?a={point_code}'
 # 锁
 mutex = Lock()
 
@@ -119,6 +124,7 @@ class Worker(QThread):
     def __del__(self):
         self.working = False
         self.wait()
+        self.driver.close()
         self.driver.quit()
 
     def init_phantomjs_driver(self):
@@ -176,6 +182,45 @@ class Worker(QThread):
         # 启用按钮
         self.set_button_enabled(True)
 
+    def get_pointcard(self, bank_item, et):
+        """
+        获取知识点
+        :param bank_item:
+        :param et:
+        :return:
+        """
+        item_id = bank_item.get('fieldset_id')
+        chaper_id = bank_item.get('chaper_id')
+        pointcard_xpath = et.xpath('//div[@class="pt3"]')
+        point_a = pointcard_xpath.xpath('.//a')
+        result = list()
+        for item in point_a:
+            onclick = item.xpath('./@onclick').get('')
+            onclick = onclick.split(';')[0].split('openPointCard')[1]
+            onclick = onclick.replace("'", "").replace('"', '').replace('(', "").replace(")", "")
+            pointcard = onclick.split(',')
+            pointcard_page = POINTCARD_PAGE.format(subject=pointcard[0],
+                                                   point_code=pointcard[1])
+            retry_count = 0
+            while True:
+                html = request.urlopen(pointcard_page + '&r=' + str(random.random()))
+                download_soup = BeautifulSoup(html, 'lxml')
+                title = download_soup.find('b')
+                if not title and retry_count < 3:
+                    retry_count += 1
+                    continue
+                if title:
+                    title = title.text
+                break
+            item_point = dict(url=pointcard_page,
+                              item_id=item_id,
+                              point_code=pointcard[1],
+                              subject=pointcard[0],
+                              chaper_id=chaper_id,
+                              title=title)
+            self.db_connect.add(ItemPoint(**item_point))
+        return result
+
     def item_bank_details(self):
         """
         详情页爬取方法
@@ -221,6 +266,7 @@ class Worker(QThread):
                 bank_item['chaper_id'] = item.get('chaper_id')
                 bank_item['library_id'] = item.get('library_id')
                 bank_item['item_style_code'] = item.get('item_style_code')
+                self.get_pointcard(bank_item, et)
                 mutex.acquire()
                 self.db_connect.add(ItemBank(**bank_item))
                 mutex.release()
