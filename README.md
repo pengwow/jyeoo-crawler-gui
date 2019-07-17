@@ -13,6 +13,16 @@
 4.目前已爬取真实课题ID为目标的半自动爬虫工具，后期待加入爬取详情页数据。详情页数据每次访问为一个真实请求，并且无账号也可访问。故为第二目标
 
 ## 操作方法
+### 登陆与获取登陆账号信息
+![login](/assets/login.gif)
+### 章节爬取
+![zhangjie](/assets/zhangjie.gif)
+### 题库爬取
+![tiku](/assets/tiku.gif)
+### 详情页爬取
+* 正在进行中
+
+## 开发环境
 ### 环境
 安装依赖包环境
 `pip install -r requirements.txt`
