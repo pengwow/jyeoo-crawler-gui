@@ -30,7 +30,7 @@
 ### 编译生成windows可执行程序
 `pyinstaller main.spec`
 
-### 开发调试
+### 启动
 `python main.py`
 
 
