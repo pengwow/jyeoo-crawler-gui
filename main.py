@@ -49,6 +49,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.thread.crawler_chapter_progress.connect(self.crawler_chapter_progress)
         self.thread.message_box.connect(self.message_box)
         self.thread.execution_method.connect(self.execution_method)
+        self.thread.details_progress.connect(self.details_progress)
 
     @staticmethod
     def init_db_connect():
@@ -281,6 +282,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
     def start_details(self):
         self.statusbar.showMessage('正在启动无头浏览器')
         self.init_work_thread_data()
+        self.thread.crawl_maximum = int(self.spinBox_details.text())
         self.thread.type = 'item_bank_details'
         self.thread.start()
 
@@ -303,6 +305,13 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
             self.progressBar_crawler.setValue(maximum)
         else:
             self.progressBar_crawler.setValue(current)
+
+    def details_progress(self, current, maximum):
+        self.progressBar_details.setMaximum(maximum)
+        if current >= maximum:
+            self.progressBar_details.setValue(maximum)
+        else:
+            self.progressBar_details.setValue(current)
 
     # def chapter_progress(self, current, maximum):
     #     self.progressBar_chapter.setMaximum(maximum)
@@ -353,7 +362,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
                 _id = QTableWidgetItem(str(item.id))
                 _detail_page_url = QTableWidgetItem(item.detail_page_url)
                 _id.setFlags(Qt.ItemIsSelectable)
-                _detail_page_url.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEditable)
+                _detail_page_url.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable)
                 self.tableWidget_dataInfo.setItem(r_pos, 0, _id)
                 self.tableWidget_dataInfo.setItem(r_pos, 1, _detail_page_url)
                 r_pos += 1
