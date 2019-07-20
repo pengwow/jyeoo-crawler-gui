@@ -1667,8 +1667,6 @@ sss = """
 
 
 
-from lxml import etree
-
-ccc = etree.HTML(sss)
-aaaaa = ccc.xpath('//div[@class="pt1"]/a/text()')
-print(aaaaa)
+import zipfile
+zipf = zipfile.ZipFile('third-party/phantomjs.zip')
+zipf.extractall('third-party')

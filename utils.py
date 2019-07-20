@@ -1,10 +1,15 @@
 # coding=utf-8
 import configparser
 import uuid
-
+import platform
 from multiprocessing import Lock
+import os
+import zipfile
+
 # 锁
 mutex = Lock()
+
+
 # import os
 
 
@@ -98,7 +103,13 @@ def get_config(section):
 
 
 def get_phantomjs_path():
-    phantomjs = "third-party/phantomjs.exe"
+    current_system = platform.system()
+    phantomjs = "third-party/phantomjs"
+    if "Windows" == current_system:
+        phantomjs = "third-party/phantomjs.exe"
+    if not os.path.exists(phantomjs) and os.path.exists(phantomjs + '.zip'):
+        zipf = zipfile.ZipFile(phantomjs + '.zip')
+        zipf.extractall('third-party')
     return phantomjs
 
 
