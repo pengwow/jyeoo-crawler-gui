@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>982</width>
-    <height>1069</height>
+    <width>2041</width>
+    <height>1111</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>961</width>
+      <width>981</width>
       <height>131</height>
      </rect>
     </property>
@@ -93,7 +93,7 @@
       <x>10</x>
       <y>160</y>
       <width>981</width>
-      <height>521</height>
+      <height>541</height>
      </rect>
     </property>
     <property name="title">
@@ -105,7 +105,7 @@
        <x>20</x>
        <y>30</y>
        <width>941</width>
-       <height>461</height>
+       <height>501</height>
       </rect>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
@@ -263,14 +263,16 @@
       </item>
      </layout>
     </widget>
+    <zorder>layoutWidget</zorder>
+    <zorder>treeWidget_chapter</zorder>
    </widget>
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>710</y>
+      <y>720</y>
       <width>981</width>
-      <height>291</height>
+      <height>311</height>
      </rect>
     </property>
     <property name="title">
@@ -416,6 +418,8 @@
           </item>
          </layout>
         </widget>
+        <zorder>layoutWidget</zorder>
+        <zorder>groupBox_4</zorder>
        </widget>
        <widget class="QWidget" name="tab_3">
         <attribute name="title">
@@ -522,20 +526,43 @@
      </item>
     </layout>
    </widget>
+   <widget class="QGroupBox" name="groupBox_4">
+    <property name="geometry">
+     <rect>
+      <x>1000</x>
+      <y>10</y>
+      <width>1021</width>
+      <height>1021</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>数据表格</string>
+    </property>
+    <widget class="QTableWidget" name="tableWidget_dataInfo">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>981</width>
+       <height>971</height>
+      </rect>
+     </property>
+    </widget>
+   </widget>
+   <zorder>groupBox_2</zorder>
    <zorder>groupBox</zorder>
    <zorder>groupBox_3</zorder>
-   <zorder>groupBox_2</zorder>
-   <zorder>splitter</zorder>
-   <zorder></zorder>
-   <zorder>comboBox_from</zorder>
-   <zorder></zorder>
+   <zorder>tabWidget</zorder>
+   <zorder>label</zorder>
+   <zorder>lcdNumber</zorder>
+   <zorder>groupBox_4</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>982</width>
+     <width>2041</width>
      <height>41</height>
     </rect>
    </property>

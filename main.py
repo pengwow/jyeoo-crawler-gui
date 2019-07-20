@@ -5,7 +5,8 @@ from ui import client
 from worker import Worker
 from dialog import MyDBDialog
 from webview import MainWindow
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QTreeWidgetItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QTreeWidgetItem, QTableWidgetItem
+from PyQt5.QtCore import Qt
 import utils
 from utils import mutex
 from mysql_model import *
@@ -89,6 +90,8 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.pushButton_start_chapter.clicked.connect(self.start_chapter)
         # 详情页开始
         self.pushButton_start_details.clicked.connect(self.start_details)
+        # tab切换触发
+        self.tabWidget.currentChanged.connect(self.tab_change)
 
     def combobox_init(self, refresh_list):
         exec_str = 'self.{func}()'
@@ -328,6 +331,40 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
     def execution_method(self, method):
         # self.statusbar.showMessage('执行方法：%s' % method)
         eval(method)
+
+    def tab_change(self):
+        current_index = self.tabWidget.currentIndex()
+        # 清空数据详情窗体内容
+        self.tableWidget_dataInfo.clear()
+        # 章节ID
+        chaper_id = self.comboBox_chapter.currentData()
+        if 0 == current_index and chaper_id:
+            # 切换到题库
+            self.tableWidget_dataInfo.setColumnCount(2)  # 控制表格有几列
+
+            self.tableWidget_dataInfo.setColumnWidth(1, 1000)  # 设置j列的宽度
+            self.tableWidget_dataInfo.verticalHeader().setVisible(False)  # 隐藏垂直表头
+            self.tableWidget_dataInfo.horizontalHeader().setVisible(False)  # 隐藏水平表头
+            itembank_init_query = self.db_connect.session.query(ItemBankInit.id, ItemBankInit.detail_page_url).filter(
+                ItemBankInit.chaper_id == chaper_id)
+            r_pos = 0
+            self.tableWidget_dataInfo.setRowCount(itembank_init_query.count())  # 控制表格有几行
+            for item in itembank_init_query:
+                _id = QTableWidgetItem(str(item.id))
+                _detail_page_url = QTableWidgetItem(item.detail_page_url)
+                _id.setFlags(Qt.ItemIsSelectable)
+                _detail_page_url.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEditable)
+                self.tableWidget_dataInfo.setItem(r_pos, 0, _id)
+                self.tableWidget_dataInfo.setItem(r_pos, 1, _detail_page_url)
+                r_pos += 1
+
+            # self.tableWidget_dataInfo.setRowHeight(i, 50)  # 设置i行的高度
+        elif 1 == current_index:
+            # 切换到详情页
+            pass
+        elif 2 == current_index:
+            # 切换到章节
+            pass
 
     def __del__(self):
         self.db_connect.session.close_all()
