@@ -22,10 +22,12 @@ from selenium.webdriver import DesiredCapabilities
 class Worker(QThread):
     sinOut = pyqtSignal(str)  # 自定义信号，执行run()函数时，从相关线程发射此信号
     crawler_progress = pyqtSignal(int, int)  # 爬虫进度条信号
+    details_progress = pyqtSignal(int, int)  # 详情爬虫进度条信号
     chapter_progress = pyqtSignal(int, int)  # 章节进度条信号
     crawler_chapter_progress = pyqtSignal(int, int)  # 爬取章节进度条信号
     message_box = pyqtSignal(str, str)  # 弹窗提示
     execution_method = pyqtSignal(str)  # 执行方法
+    data_info_table = pyqtSignal(dict)  # 数据表格
 
     def __init__(self, parent=None):
         super(Worker, self).__init__(parent)
@@ -121,30 +123,51 @@ class Worker(QThread):
         # 添加cookie
         self.add_cookie()
         if self.type:
-            # 动态执行方法
-            eval('self.{func}()'.format(func=self.type))
-        # 启用按钮
-        self.set_button_enabled(True)
+            try:
+                # 动态执行方法
+                eval('self.{func}()'.format(func=self.type))
+            except Exception as e:
+                # 出现错误！
+                self.sinOut.emit(str(e))
+                image_png = self.driver.get_screenshot_as_png()
+                self.driver.get_screenshot_as_file('./error.png')
+                # wvd = WebViewDialog()
+                # wvd.set_image(image_png)
+                # wvd.exec_()
+                with open('error.html', 'w') as error_file:
+                    error_file.write(self.driver.page_source)
 
-    def get_pointcard(self, bank_item, et):
+            finally:
+                # self.driver.close()
+                # 启用按钮
+                self.set_button_enabled(True)
+
+    def get_pointcard(self, fieldset_id, bank_item, et):
         """
         获取知识点
+        :param fieldset_id:
         :param bank_item:
         :param et:
         :return:
         """
-        item_id = bank_item.get('fieldset_id')
         chaper_id = bank_item.get('chaper_id')
         pointcard_xpath = et.xpath('//div[@class="pt3"]')
-        point_a = pointcard_xpath.xpath('.//a')
+        if not pointcard_xpath:
+            pass
+            return
+        point_a = pointcard_xpath[0].xpath('.//a')
         result = list()
         for item in point_a:
-            onclick = item.xpath('./@onclick').get('')
-            onclick = onclick.split(';')[0].split('openPointCard')[1]
+            onclick = item.xpath('./@onclick')
+            if not onclick:
+                continue
+            onclick = onclick[0].split(';')[0].split('openPointCard')[1]
             onclick = onclick.replace("'", "").replace('"', '').replace('(', "").replace(")", "")
             pointcard = onclick.split(',')
+
             pointcard_page = POINTCARD_PAGE.format(subject=pointcard[0],
                                                    point_code=pointcard[1])
+            self.sinOut.emit('正在爬取知识点信息页  %s' % pointcard_page)
             retry_count = 0
             while True:
                 html = request.urlopen(pointcard_page + '&r=' + str(random.random()))
@@ -157,36 +180,66 @@ class Worker(QThread):
                     title = title.text
                 break
             item_point = dict(url=pointcard_page,
-                              item_id=item_id,
-                              point_code=pointcard[1],
+                              item_id=fieldset_id,
+                              code=pointcard[1],
                               subject=pointcard[0],
                               chaper_id=chaper_id,
-                              title=title)
-            self.db_connect.add(ItemPoint(**item_point))
+                              title=title,
+                              content=download_soup)
+            result.append(item_point)
         return result
+
+    def item_bank_deails_and_point_db(self, bank_item):
+        """
+        详情页入库
+        :param bank_item:
+        :return:
+        """
+        points = bank_item.pop('points')
+        for point in points:
+            # 课题知识点
+            self.db_connect.add(ItemPoint(**dict(
+                item_id=point['item_id'],
+                point_code=point['code']
+            )))
+            # 章节知识点
+            self.db_connect.add(ChaperPoint(**dict(chaper_id=point['chaper_id'],
+                                                   title=point['title'],
+                                                   code=point['code'],
+                                                   content=str(point['content']),
+                                                   url=point['url'])))
+        # 课题入库
+        self.db_connect.add(ItemBank(**bank_item))
+        return
 
     def item_bank_details(self):
         """
         详情页爬取方法
         :return:
         """
+        current_count = 0
         if not self.chapter_id:
             self.sinOut.emit('错误！章节获取失败，可能未选择章节！')
         else:
             start_urls = self.get_details_url()
             for item in start_urls:
+                current_count += 1
                 bank_item = dict()
+                self.sinOut.emit('正在获取详情页 %s' % item.get('detail_page_url'))
                 self.driver.get(item.get('detail_page_url'))
                 et = etree.HTML(self.driver.page_source)
                 year_html = et.xpath('.//div[@class="pt1"]/a/text()')
-                year_area = utils.txt_wrap_by('（', '）', year_html[0])
-                if not year_area:
-                    year_area = utils.txt_wrap_by('(', ')', year_html[0])
-                if year_area:
-                    bank_item['year_code'] = year_area.split('•')[0]
+                if year_html:
+                    year_area = utils.txt_wrap_by('（', '）', year_html[0])
+                    if not year_area:
+                        year_area = utils.txt_wrap_by('(', ')', year_html[0])
+                    if year_area:
+                        bank_item['year_code'] = year_area.split('•')[0]
+                    bank_item['year_area'] = year_area
+                else:
+                    bank_item['year_area'] = ''
                 bank_item['used_times'] = ''
                 bank_item['exam_times'] = ''
-                bank_item['year_area'] = year_area
                 fieldset_xpath = '//div[@id="{fieldset_id}"]'.format(fieldset_id=item.get('fieldset_id'))
                 detail_data = et.xpath(fieldset_xpath)
                 # 考题
@@ -210,10 +263,15 @@ class Worker(QThread):
                 bank_item['chaper_id'] = item.get('chaper_id')
                 bank_item['library_id'] = item.get('library_id')
                 bank_item['item_style_code'] = item.get('item_style_code')
-                self.get_pointcard(bank_item, et)
+                point_list = self.get_pointcard(item.get('fieldset_id'), bank_item, et)
+                bank_item['points'] = point_list
+                # 入库
                 mutex.acquire()
-                self.db_connect.add(ItemBank(**bank_item))
+                self.item_bank_deails_and_point_db(bank_item)
                 mutex.release()
+                # 更新爬虫次数进度
+                self.details_progress.emit(current_count, int(self.crawl_maximum))
+
         return
 
     @staticmethod

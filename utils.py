@@ -156,6 +156,8 @@ def merge_list(src_list):
 
 # 取字符串中两个符号之间的东东
 def txt_wrap_by(start_str, end, html):
+    if not html:
+        return ''
     start = html.find(start_str)
     if start >= 0:
         start += len(start_str)

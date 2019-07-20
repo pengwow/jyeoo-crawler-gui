@@ -139,7 +139,7 @@ class ChaperPoint(Base):
     # 知识点编码
     code = Column(String(10))
     # 知识点内容
-    content = Column(String(8000))
+    content = Column(Text)
     # 知识点URL
     url = Column(String(255))
 
