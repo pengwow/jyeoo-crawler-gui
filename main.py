@@ -29,7 +29,8 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
                              'refresh_teaching',
                              'refresh_chapter',
                              'refresh_bank_total',
-                             'refresh_from'
+                             'refresh_from',
+                             'refresh_data_info'
                              ]
         self.setupUi(self)
         self.setFixedSize(self.width(), self.height())
@@ -73,26 +74,29 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.pushButton_start.clicked.connect(self.start)
         self.comboBox_level.activated.connect(
             lambda: self.combobox_init(
-                ['refresh_grade', 'refresh_subject', 'refresh_teaching', 'refresh_chapter', 'refresh_bank_total']))
+                ['refresh_grade', 'refresh_subject', 'refresh_teaching', 'refresh_chapter', 'refresh_bank_total',
+                 'refresh_data_info']))
         self.comboBox_grade.activated.connect(
             lambda: self.combobox_init(
-                ['refresh_subject', 'refresh_teaching', 'refresh_chapter', 'refresh_bank_total']))
+                ['refresh_subject', 'refresh_teaching', 'refresh_chapter', 'refresh_bank_total', 'refresh_data_info']))
         self.comboBox_subject.activated.connect(
-            lambda: self.combobox_init(['refresh_teaching', 'refresh_chapter', 'refresh_bank_total']))
-        self.comboBox_teaching.activated.connect(lambda: self.combobox_init(['refresh_chapter', 'refresh_bank_total']))
+            lambda: self.combobox_init(
+                ['refresh_teaching', 'refresh_chapter', 'refresh_bank_total', 'refresh_data_info']))
+        self.comboBox_teaching.activated.connect(
+            lambda: self.combobox_init(['refresh_chapter', 'refresh_bank_total', 'refresh_data_info']))
 
         self.pushButton_loaddata.clicked.connect(lambda: self.combobox_init(self.refresh_list))
         # 章节点击触发
         # 原章节切换触发
         # self.comboBox_chapter.activated.connect(lambda: self.combobox_init(['refresh_bank_total']))
-        self.treeWidget_chapter.clicked.connect(lambda: self.combobox_init(['refresh_bank_total']))
+        self.treeWidget_chapter.clicked.connect(lambda: self.combobox_init(['refresh_bank_total', 'refresh_data_info']))
         self.treeWidget_chapter.clicked.connect(self.tree_chapter)
         # 章节开始
         self.pushButton_start_chapter.clicked.connect(self.start_chapter)
         # 详情页开始
         self.pushButton_start_details.clicked.connect(self.start_details)
         # tab切换触发
-        self.tabWidget.currentChanged.connect(self.tab_change)
+        self.tabWidget.currentChanged.connect(self.refresh_data_info)
 
     def combobox_init(self, refresh_list):
         exec_str = 'self.{func}()'
@@ -169,6 +173,9 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
                         self.start_chapter()
                     break
                 tree_dict[parent_id]['item'].addChild(value.get('item'))
+        # 设置默认选中第一个
+        item = self.treeWidget_chapter.topLevelItem(0)
+        self.treeWidget_chapter.setCurrentItem(item)
 
     def refresh_grade(self):
         """
@@ -341,16 +348,20 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         # self.statusbar.showMessage('执行方法：%s' % method)
         eval(method)
 
-    def tab_change(self):
+    def refresh_data_info(self):
         current_index = self.tabWidget.currentIndex()
         # 清空数据详情窗体内容
         self.tableWidget_dataInfo.clear()
         # 章节ID
-        chaper_id = self.comboBox_chapter.currentData()
-        if 0 == current_index and chaper_id:
+        chapter_current_item = self.treeWidget_chapter.currentItem()
+        if not chapter_current_item:
+            return
+        chaper_id = chapter_current_item.text(1)
+        if not chaper_id:
+            return
+        if 0 == current_index:
             # 切换到题库
             self.tableWidget_dataInfo.setColumnCount(2)  # 控制表格有几列
-
             self.tableWidget_dataInfo.setColumnWidth(1, 1000)  # 设置j列的宽度
             self.tableWidget_dataInfo.verticalHeader().setVisible(False)  # 隐藏垂直表头
             self.tableWidget_dataInfo.horizontalHeader().setVisible(False)  # 隐藏水平表头
@@ -370,6 +381,29 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
             # self.tableWidget_dataInfo.setRowHeight(i, 50)  # 设置i行的高度
         elif 1 == current_index:
             # 切换到详情页
+            self.tableWidget_dataInfo.setColumnCount(4)  # 控制表格有几列
+            self.tableWidget_dataInfo.setColumnWidth(0, 20)  # 设置j列的宽度
+            self.tableWidget_dataInfo.setColumnWidth(1, 200)  # 设置j列的宽度
+            self.tableWidget_dataInfo.setColumnWidth(2, 1000)  # 设置j列的宽度
+            self.tableWidget_dataInfo.verticalHeader().setVisible(False)  # 隐藏垂直表头
+            self.tableWidget_dataInfo.horizontalHeader().setVisible(False)  # 隐藏水平表头
+            itembank_query = self.db_connect.session.query(ItemBank).filter(
+                ItemBank.chaper_id == chaper_id)
+            r_pos = 0
+            self.tableWidget_dataInfo.setRowCount(itembank_query.count())  # 控制表格有几行
+            for item in itembank_query:
+                _id = QTableWidgetItem(str(item.id))
+                year_area = QTableWidgetItem(item.year_area)
+                context = QTableWidgetItem(item.context)
+                url = QTableWidgetItem(item.url)
+                _id.setFlags(Qt.ItemIsSelectable)
+                year_area.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEditable)
+
+                self.tableWidget_dataInfo.setItem(r_pos, 0, _id)
+                self.tableWidget_dataInfo.setItem(r_pos, 1, year_area)
+                self.tableWidget_dataInfo.setItem(r_pos, 2, context)
+                self.tableWidget_dataInfo.setItem(r_pos, 3, url)
+                r_pos += 1
             pass
         elif 2 == current_index:
             # 切换到章节

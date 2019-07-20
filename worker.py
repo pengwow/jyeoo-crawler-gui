@@ -27,6 +27,7 @@ class Worker(QThread):
     crawler_chapter_progress = pyqtSignal(int, int)  # 爬取章节进度条信号
     message_box = pyqtSignal(str, str)  # 弹窗提示
     execution_method = pyqtSignal(str)  # 执行方法
+    data_info_table = pyqtSignal(dict)  # 数据表格
 
     def __init__(self, parent=None):
         super(Worker, self).__init__(parent)
