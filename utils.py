@@ -2,7 +2,9 @@
 import configparser
 import uuid
 
-
+from multiprocessing import Lock
+# 锁
+mutex = Lock()
 # import os
 
 
