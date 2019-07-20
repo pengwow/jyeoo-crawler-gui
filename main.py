@@ -112,7 +112,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.comboBox_level.clear()
         mutex.acquire()
         levels = self.db_connect.session.query(ItemStyle.level_name, ItemStyle.level_code).group_by(
-            ItemStyle.level_name)
+            ItemStyle.level_name).order_by(ItemStyle.level_code.desc())
         mutex.release()
         for item in levels:
             self.comboBox_level.addItem(item[0], item[1])

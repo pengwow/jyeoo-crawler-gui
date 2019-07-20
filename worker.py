@@ -198,16 +198,20 @@ class Worker(QThread):
         points = bank_item.pop('points')
         for point in points:
             # 课题知识点
-            self.db_connect.add(ItemPoint(**dict(
-                item_id=point['item_id'],
-                point_code=point['code']
-            )))
+            if self.db_connect.session.query(ItemPoint).filter(ItemPoint.item_id == point['item_id'],
+                                                               ItemPoint.point_code == point['code']).count() == 0:
+                self.db_connect.add(ItemPoint(**dict(
+                    item_id=point['item_id'],
+                    point_code=point['code']
+                )))
             # 章节知识点
-            self.db_connect.add(ChaperPoint(**dict(chaper_id=point['chaper_id'],
-                                                   title=point['title'],
-                                                   code=point['code'],
-                                                   content=str(point['content']),
-                                                   url=point['url'])))
+            if self.db_connect.session.query(ChaperPoint).filter(ChaperPoint.chaper_id == point['chaper_id'],
+                                                                 ChaperPoint.code == point['code']).count() == 0:
+                self.db_connect.add(ChaperPoint(**dict(chaper_id=point['chaper_id'],
+                                                       title=point['title'],
+                                                       code=point['code'],
+                                                       content=str(point['content']),
+                                                       url=point['url'])))
         # 课题入库
         self.db_connect.add(ItemBank(**bank_item))
         return
