@@ -58,8 +58,8 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
     @staticmethod
     def init_db_connect():
         db_dict = utils.get_db_config()
-
-        db_connect = DBSession(account=db_dict['db_account'], password=db_dict['db_password'],
+        db_password = utils.HashManager().back_aes_ecb(db_dict['db_password'])
+        db_connect = DBSession(account=db_dict['db_account'], password=db_password,
                                ip=db_dict['db_ip'], port=db_dict['db_port'], dbname=db_dict['db_dbname'])
         return db_connect
 

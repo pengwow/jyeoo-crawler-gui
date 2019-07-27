@@ -19,11 +19,13 @@ class MyDBDialog(QDialog, DB_dialog.Ui_Dialog):
         self.lineEdit_account.setText(self.db_dict.get('db_account'))
         self.lineEdit_dbname.setText(self.db_dict.get('db_name'))
         self.lineEdit_port.setText(self.db_dict.get('db_port'))
-        self.lineEdit_password.setText(self.db_dict.get('db_password'))
+        db_password = utils.HashManager().back_aes_ecb(self.db_dict.get('db_password'))
+        self.lineEdit_password.setText(db_password)
 
     def set_db_info(self):
         db_dict = dict()
-        db_dict['db_password'] = self.lineEdit_password.text()
+        db_password = utils.HashManager().get_aes_ecb(self.lineEdit_password.text())
+        db_dict['db_password'] = db_password
         db_dict['db_port'] = self.lineEdit_port.text()
         db_dict['db_dbname'] = self.lineEdit_dbname.text()
         db_dict['db_account'] = self.lineEdit_account.text()

@@ -21,3 +21,5 @@ sip
 lxml
 pyupdater
 pyinstaller
+rsa==4.0
+pycryptodome==3.8.2
