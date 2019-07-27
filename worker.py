@@ -27,6 +27,7 @@ class Worker(QThread):
     crawler_chapter_progress = pyqtSignal(int, int)  # 爬取章节进度条信号
     message_box = pyqtSignal(str, str)  # 弹窗提示
     execution_method = pyqtSignal(str)  # 执行方法
+    change_full_control_status = pyqtSignal(bool)  # 改变全部控件状态
     data_info_table = pyqtSignal(dict)  # 数据表格
 
     def __init__(self, parent=None):
@@ -61,11 +62,6 @@ class Worker(QThread):
             'path': '/',
             'expiry': int(time.time()) + 10000000
         }
-        self.method_list = ['self.pushButton_start_chapter',
-                            'self.pushButton_loaddata',
-                            'self.pushButton_start',
-                            'self.pushButton_start_details',
-                            ]
 
     def __del__(self):
         self.working = False
@@ -104,13 +100,7 @@ class Worker(QThread):
         :param status: True/False
         :return:
         """
-        if status:
-            status_str = 'True'
-        else:
-            status_str = 'False'
-        for item in self.method_list:
-            method = item + '.setEnabled({status})'.format(status=status_str)
-            self.execution_method.emit(method)
+        self.change_full_control_status.emit(status)
 
     def run(self):
 

@@ -49,7 +49,8 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         # self.thread.chapter_progress.connect(self.chapter_progress)
         self.thread.crawler_chapter_progress.connect(self.crawler_chapter_progress)
         self.thread.message_box.connect(self.message_box)
-        self.thread.execution_method.connect(self.execution_method)
+        self.thread.change_full_control_status.connect(self.change_full_control_status)
+
         self.thread.details_progress.connect(self.details_progress)
 
     @staticmethod
@@ -344,10 +345,6 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         result = message_box.warning(self, title, content, QMessageBox.Ok | QMessageBox.Cancel)
         return result
 
-    def execution_method(self, method):
-        # self.statusbar.showMessage('执行方法：%s' % method)
-        eval(method)
-
     def refresh_data_info(self):
         current_index = self.tabWidget.currentIndex()
         # 清空数据详情窗体内容
@@ -408,6 +405,23 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         elif 2 == current_index:
             # 切换到章节
             pass
+
+    def change_full_control_status(self, status):
+        # 按钮状态
+        self.pushButton_loaddata.setEnabled(status)
+        self.pushButton_change.setEnabled(status)
+        self.pushButton_getAccount.setEnabled(status)
+        self.pushButton_logout.setEnabled(status)
+        self.pushButton_start.setEnabled(status)
+        self.pushButton_start_chapter.setEnabled(status)
+        self.pushButton_start_details.setEnabled(status)
+        # 列表状态
+        # self.comboBox_chapter.setEnabled(status)
+        self.comboBox_from.setEnabled(status)
+        self.comboBox_level.setEnabled(status)
+        self.comboBox_grade.setEnabled(status)
+        self.comboBox_subject.setEnabled(status)
+        self.comboBox_teaching.setEnabled(status)
 
     def __del__(self):
         self.db_connect.session.close_all()
