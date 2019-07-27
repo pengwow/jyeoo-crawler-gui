@@ -293,8 +293,8 @@ class Worker(QThread):
         :return:
         """
         start_url = self.get_chapter_url()
-        self.driver.get(start_url)
         try:
+            self.driver.get(start_url)
             WebDriverWait(self.driver, 30).until(
                 ec.visibility_of_element_located((By.XPATH, '//div[@class="tree-head"]/span[@id="spanEdition"]')))
         except TimeoutException as e:

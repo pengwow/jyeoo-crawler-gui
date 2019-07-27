@@ -113,6 +113,19 @@ def get_phantomjs_path():
     return phantomjs
 
 
+def kill_process(process_name):
+    try:
+        current_system = platform.system()
+        if "Windows" == current_system:
+            os.system('taskkill /f /im %s' % process_name)
+        else:
+            cmd = 'ps aux | grep {process_name} '.format(process_name=process_name)
+            cmd += "| awk {print '$2'} | xargs kill"
+            os.system(cmd)
+    except Exception as e:
+        print(str(e))
+
+
 def recursive_get_li(parent_id, library_id, xpath_list):
     """
     递归获取li
@@ -153,16 +166,6 @@ def split_list(src_list):
             child = split_list(child)
             new_list.extend(child)
     return new_list
-
-
-def merge_list(src_list):
-    """
-    合并列表
-    :param src_list:
-    :return:
-    """
-    for item in src_list:
-        pass
 
 
 # 取字符串中两个符号之间的东东

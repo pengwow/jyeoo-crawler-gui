@@ -7,6 +7,7 @@ from dialog import MyDBDialog
 from webview import MainWindow
 from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QTreeWidgetItem, QTableWidgetItem
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
 import utils
 from utils import mutex
 from mysql_model import *
@@ -33,6 +34,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
                              'refresh_data_info'
                              ]
         self.setupUi(self)
+        self.setWindowIcon(QIcon('./images/main.ico'))
         self.setFixedSize(self.width(), self.height())
         self.db_connect = self.init_db_connect()
         # 按钮初始化
@@ -70,7 +72,6 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         # 账号信息相关
         self.pushButton_getAccount.clicked.connect(self.get_cookie)
         self.pushButton_change.clicked.connect(self.change_account)
-        self.pushButton_logout.clicked.connect(self.logout)
         # 操作：题库相关
         self.pushButton_start.clicked.connect(self.start)
         self.comboBox_level.activated.connect(
@@ -98,6 +99,9 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.pushButton_start_details.clicked.connect(self.start_details)
         # tab切换触发
         self.tabWidget.currentChanged.connect(self.refresh_data_info)
+
+        # 清理按钮
+        self.pushButton_clear.clicked.connect(self.clear_garbage)
 
     def combobox_init(self, refresh_list):
         exec_str = 'self.{func}()'
@@ -254,10 +258,6 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.comboBox_chapter.clear()
         self.comboBox_chapter.addItem(name, chapter_id)
 
-    def logout(self):
-        self.browser.logout()
-        self.browser.clear_all_data()
-
     @staticmethod
     def set_db_connect():
         # print('show db dialog')
@@ -411,7 +411,7 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.pushButton_loaddata.setEnabled(status)
         self.pushButton_change.setEnabled(status)
         self.pushButton_getAccount.setEnabled(status)
-        self.pushButton_logout.setEnabled(status)
+        self.pushButton_clear.setEnabled(status)
         self.pushButton_start.setEnabled(status)
         self.pushButton_start_chapter.setEnabled(status)
         self.pushButton_start_details.setEnabled(status)
@@ -422,6 +422,11 @@ class MyWindow(QMainWindow, client.Ui_MainWindow):
         self.comboBox_grade.setEnabled(status)
         self.comboBox_subject.setEnabled(status)
         self.comboBox_teaching.setEnabled(status)
+
+    def clear_garbage(self):
+        utils.kill_process('phantomjs.exe')
+        self.browser.logout()
+        self.browser.clear_all_data()
 
     def __del__(self):
         self.db_connect.session.close_all()

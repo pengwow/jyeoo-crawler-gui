@@ -1,7 +1,7 @@
 # coding=utf-8
 from ui import DB_dialog, WebView
 from PyQt5.QtWidgets import QDialog
-from PyQt5.QtGui import QPixmap, QImage
+from PyQt5.QtGui import QPixmap, QImage, QIcon
 import utils
 
 
@@ -9,6 +9,7 @@ class MyDBDialog(QDialog, DB_dialog.Ui_Dialog):
     def __init__(self):
         super(MyDBDialog, self).__init__()
         self.setupUi(self)
+        self.setWindowIcon(QIcon('./images/db.png'))
         self.buttonBox.clicked.connect(self.set_db_info)
         self.db_dict = utils.get_db_config()
         self.init_db_info()

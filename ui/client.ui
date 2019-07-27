@@ -74,12 +74,12 @@
         </spacer>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_logout">
+        <widget class="QPushButton" name="pushButton_clear">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="text">
-          <string>注销</string>
+          <string>清理退出</string>
          </property>
         </widget>
        </item>
@@ -263,8 +263,6 @@
       </item>
      </layout>
     </widget>
-    <zorder>layoutWidget</zorder>
-    <zorder>treeWidget_chapter</zorder>
    </widget>
    <widget class="QGroupBox" name="groupBox_2">
     <property name="geometry">
@@ -418,8 +416,6 @@
           </item>
          </layout>
         </widget>
-        <zorder>layoutWidget</zorder>
-        <zorder>groupBox_4</zorder>
        </widget>
        <widget class="QWidget" name="tab_3">
         <attribute name="title">
@@ -552,9 +548,6 @@
    <zorder>groupBox_2</zorder>
    <zorder>groupBox</zorder>
    <zorder>groupBox_3</zorder>
-   <zorder>tabWidget</zorder>
-   <zorder>label</zorder>
-   <zorder>lcdNumber</zorder>
    <zorder>groupBox_4</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -600,7 +593,7 @@
  <tabstops>
   <tabstop>pushButton_change</tabstop>
   <tabstop>pushButton_getAccount</tabstop>
-  <tabstop>pushButton_logout</tabstop>
+  <tabstop>pushButton_clear</tabstop>
   <tabstop>comboBox_level</tabstop>
   <tabstop>spinBox_crawlMaximum</tabstop>
   <tabstop>pushButton_start</tabstop>
